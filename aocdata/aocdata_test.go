@@ -1,6 +1,9 @@
 package aocdata
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestInput(t *testing.T) {
 	// There should be data available for all existing problems. This test will
@@ -16,6 +19,9 @@ func TestInput(t *testing.T) {
 			if input == "" {
 				t.Errorf(`Input(%d, %d) input = ""; want non-empty`, year, day)
 				continue
+			}
+			if strings.TrimSpace(input) != input {
+				t.Errorf(`Input(%d, %d) input has trailing newlines: %q`, year, day, input)
 			}
 		}
 	}
@@ -34,8 +40,11 @@ func TestAnswer(t *testing.T) {
 					continue
 				}
 				if answer == "" {
-					t.Errorf(`Answer(%d, %d, %d) input = ""; want non-empty`, year, day, part)
+					t.Errorf(`Answer(%d, %d, %d) answer = ""; want non-empty`, year, day, part)
 					continue
+				}
+				if strings.HasSuffix(answer, "\n") {
+					t.Errorf(`Answer(%d, %d, %d) answer has trailing newlines: %q`, year, day, part, answer)
 				}
 			}
 		}
