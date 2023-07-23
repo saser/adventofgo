@@ -77,7 +77,7 @@ func getInput(ctx context.Context, c *http.Client, year int, day int) (string, e
 	return string(body), nil
 }
 
-var answerRE = regexp.MustCompile(`Your puzzle answer was <code>(\w+)</code>`)
+var answerRE = regexp.MustCompile(`Your puzzle answer was <code>(.+?)</code>`)
 
 // getAnswers issues a HTTP GET request for
 // https://adventofcode/<year>/day/<day>. If the returned body contains answers
