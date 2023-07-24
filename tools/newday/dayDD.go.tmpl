@@ -2,10 +2,14 @@ package day{{.PaddedDay}}
 
 import "errors"
 
-func Part1(input string) (string, error) {
+func solve(input string, part int) (string, error) {
     return "", errors.New("unimplemented")
 }
 
+func Part1(input string) (string, error) {
+    return solve(input, 1)
+}
+
 func Part2(input string) (string, error) {
-    return "", errors.New("unimplemented")
+    return solve(input, 2)
 }
