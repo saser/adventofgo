@@ -35,11 +35,11 @@ func Test(t *testing.T, year int, day int, part int, fn SolveFunc) {
 	input := aocdata.InputT(t, year, day)
 	got, err := fn(input)
 	if err != nil {
-		t.Fatalf("fn(<real input>) err = %v", err)
+		t.Fatalf("Part%d(<real input>) err = %v", part, err)
 	}
 	want := aocdata.AnswerT(t, year, day, part)
 	if got != want {
-		t.Fatalf("fn(<real input>) = %q; want %q", got, want)
+		t.Fatalf("Part%d(<real input>) = %q; want %q", part, got, want)
 	}
 }
 
@@ -57,11 +57,11 @@ func Benchmark(b *testing.B, year int, day int, part int, fn SolveFunc) {
 	input := aocdata.InputT(b, year, day)
 	got, err := fn(input)
 	if err != nil {
-		b.Fatalf("fn(<real input>) err = %v", err)
+		b.Fatalf("Part%d(<real input>) err = %v", part, err)
 	}
 	want := aocdata.AnswerT(b, year, day, part)
 	if got != want {
-		b.Fatalf("fn(<real input>) = %q; want %q", got, want)
+		b.Fatalf("Part%d(<real input>) = %q; want %q", part, got, want)
 	}
 	for i := 0; i < b.N; i++ {
 		bAnswer, bErr = fn(input)
