@@ -19,47 +19,94 @@ func Part1(input string) (string, error) {
 	return fmt.Sprint(sum), nil
 }
 
-var digitValue = map[string]int{
-	"1":     1,
-	"2":     2,
-	"3":     3,
-	"4":     4,
-	"5":     5,
-	"6":     6,
-	"7":     7,
-	"8":     8,
-	"9":     9,
-	"one":   1,
-	"two":   2,
-	"three": 3,
-	"four":  4,
-	"five":  5,
-	"six":   6,
-	"seven": 7,
-	"eight": 8,
-	"nine":  9,
+// wordDigits acts like a map, where wordDigit[i] (a string) has a value of i
+// (an integer).
+var wordDigits = []string{
+	"zero",
+	"one",
+	"two",
+	"three",
+	"four",
+	"five",
+	"six",
+	"seven",
+	"eight",
+	"nine",
 }
 
 func Part2(input string) (string, error) {
 	sum := 0
 	lines := striter.OverLines(input)
 	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
-		firstIndex := len(line)
-		firstDigit := 0
-		lastIndex := -1
-		lastDigit := 0
-		for digit := range digitValue {
-			if i := strings.Index(line, digit); i != -1 && i < firstIndex {
-				firstIndex = i
-				firstDigit = digitValue[digit]
+		// To find the first digit we create longer and longer prefixes of the
+		// line, until we find a digit at the end of the prefix. That is
+		// guaranteed to be the first digit.
+		//
+		// Examples:
+		// "sjv8":
+		//     "s"    => nothing
+		//     "sj"   => nothing
+		//     "sjv"  => nothing
+		//     "sjv8" => 8
+		//
+		// "abcone2three":
+		//     "a"       => nothing
+		//     "ab"      => nothing
+		//     "abc"     => nothing
+		//     "abco"    => nothing
+		//     "abcon"   => nothing
+		//     "abcone"  => one
+		first := 0
+	firstLoop:
+		for i := 1; i <= len(line); i++ {
+			prefix := line[:i]
+			if c := prefix[len(prefix)-1]; c >= '0' && c <= '9' {
+				first = int(c - '0')
+				break
 			}
-			if i := strings.LastIndex(line, digit); i != -1 && i > lastIndex {
-				lastIndex = i
-				lastDigit = digitValue[digit]
+			for value, word := range wordDigits {
+				if strings.HasSuffix(prefix, word) {
+					first = value
+					break firstLoop
+				}
 			}
 		}
-		add := firstDigit*10 + lastDigit
-		sum += add
+		// Similarly, we find the last digit by creating suffixes (instead of
+		// prefixes) and look at the beginning of the suffix (instead of the end
+		// of the prefix).
+		//
+		// Examples:
+		// "sjv8fpr":
+		//     "r"    => nothing
+		//     "pr"   => nothing
+		//     "fpr"  => nothing
+		//     "8fpr" => 8
+		//
+		// "one2threefoo":
+		//     "o"        => nothing
+		//     "oo"       => nothing
+		//     "foo"      => nothing
+		//     "efoo"     => nothing
+		//     "eefoo"    => nothing
+		//     "reefoo"   => nothing
+		//     "hreefoo"  => nothing
+		//     "threefoo" => 3
+		last := 0
+	lastLoop:
+		for i := len(line) - 1; i >= 0; i-- {
+			suffix := line[i:]
+			if c := suffix[0]; c >= '0' && c <= '9' {
+				last = int(c - '0')
+				break
+			}
+			for value, word := range wordDigits {
+				if strings.HasPrefix(suffix, word) {
+					last = value
+					break lastLoop
+				}
+			}
+		}
+		sum += first*10 + last
 	}
 	return fmt.Sprint(sum), nil
 }
