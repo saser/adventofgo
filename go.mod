@@ -3,11 +3,11 @@ module go.saser.se/adventofgo
 go 1.21
 
 require (
-	github.com/golang/glog v1.1.1
-	github.com/google/go-cmp v0.5.9
-	golang.org/x/exp v0.0.0-20230725093048-515e97ebf090
-	golang.org/x/net v0.12.0
-	golang.org/x/perf v0.0.0-20230717203022-1ba3a21238c9
+	github.com/golang/glog v1.2.0
+	github.com/google/go-cmp v0.6.0
+	golang.org/x/exp v0.0.0-20231127185646-65229373498e
+	golang.org/x/net v0.19.0
+	golang.org/x/perf v0.0.0-20231127181059-b53752263861
 )
 
 require github.com/aclements/go-moremath v0.0.0-20210112150236-f10218a38794 // indirect
