@@ -33,11 +33,11 @@ type SolveFunc func(input string) (string, error)
 func Test(t *testing.T, year int, day int, part int, fn SolveFunc) {
 	t.Helper()
 	input := aocdata.InputT(t, year, day)
+	want := aocdata.AnswerT(t, year, day, part)
 	got, err := fn(input)
 	if err != nil {
 		t.Fatalf("Part%d(<real input>) err = %v", part, err)
 	}
-	want := aocdata.AnswerT(t, year, day, part)
 	if got != want {
 		t.Fatalf("Part%d(<real input>) = %q; want %q", part, got, want)
 	}
@@ -55,11 +55,11 @@ var (
 func Benchmark(b *testing.B, year int, day int, part int, fn SolveFunc) {
 	b.Helper()
 	input := aocdata.InputT(b, year, day)
+	want := aocdata.AnswerT(b, year, day, part)
 	got, err := fn(input)
 	if err != nil {
 		b.Fatalf("Part%d(<real input>) err = %v", part, err)
 	}
-	want := aocdata.AnswerT(b, year, day, part)
 	if got != want {
 		b.Fatalf("Part%d(<real input>) = %q; want %q", part, got, want)
 	}
