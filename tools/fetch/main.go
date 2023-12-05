@@ -137,20 +137,25 @@ func writeDataset(ds dataset, dir string) error {
 		return fmt.Errorf("write input file: %v", err)
 	}
 
+	part1Path := base + "_part1_output"
 	if ds.Part1 != "" {
-		part1Path := base + "_part1_output"
-		glog.V(1).Infof("Writing part 1 file to %q.", part1Path)
-		if err := os.WriteFile(part1Path, []byte(ensureNewline(ds.Part1)), fs.FileMode(0644)); err != nil {
-			return fmt.Errorf("write part 1 answer file: %v", err)
-		}
+		glog.V(1).Infof("Writing part 1 answer (%q) to %q.", ds.Part1, part1Path)
+	} else {
+		glog.V(1).Infof("Writing empty part 1 answer to %q.", part1Path)
+	}
+	if err := os.WriteFile(part1Path, []byte(ensureNewline(ds.Part1)), fs.FileMode(0644)); err != nil {
+		return fmt.Errorf("write part 1 answer file: %v", err)
 	}
 
+	part2Path := base + "_part2_output"
 	if ds.Part2 != "" {
-		part2Path := base + "_part2_output"
-		glog.V(1).Infof("Writing part 2 file to %q.", part2Path)
-		if err := os.WriteFile(part2Path, []byte(ensureNewline(ds.Part2)), fs.FileMode(0644)); err != nil {
-			return fmt.Errorf("write part 2 answer file: %v", err)
-		}
+		glog.V(1).Infof("Writing part 2 answer (%q) to %q.", ds.Part2, part2Path)
+	} else {
+		glog.V(1).Infof("Writing empty part 2 answer to %q.", part2Path)
+	}
+	glog.V(1).Infof("Writing part 2 file to %q.", part2Path)
+	if err := os.WriteFile(part2Path, []byte(ensureNewline(ds.Part2)), fs.FileMode(0644)); err != nil {
+		return fmt.Errorf("write part 2 answer file: %v", err)
 	}
 
 	return nil
