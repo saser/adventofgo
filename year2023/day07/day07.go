@@ -119,102 +119,64 @@ func compareHands(a, b hand) int {
 // two jacks, and one ace.
 //
 // Signatures have the interesting property that in this particular game, the
-// descending alphabetical order of signatures is the same as the descending
+// ascending alphabetical order of signatures is the same as the descending
 // order of hand "types" (from strongest to weakest):
-//
-//	const (
-//		fiveOfAKind  signature = "aaaaa"
-//		fourOfAKind            = "aaaab"
-//		fullHouse              = "aaabb"
-//		threeOfAKind           = "aaabc"
-//		twoPair                = "aabbc"
-//		onePair                = "aabcd"
-//		highCard               = "abcde"
-//	)
 type signature string
 
-func handSignature(h hand, withJokers bool) signature {
-	// The algorithm for calculating the signature of a hand goes roughly like this:
-	// 1. Find the frequency of each card.
-	// 2. Order the cards in descending frequency order (i.e. most frequent card
-	//    first).
-	// 3. Assign a class to each card, starting from 'a' for the most frequent
-	//    card.
-	// 4. For each card with frequency N, append N*class to the signature.
-	// The comments below will use K8JK8 as an example hand to illustrate the algorithm.
+const (
+	fiveOfAKind  signature = "aaaaa"
+	fourOfAKind  signature = "aaaab"
+	fullHouse    signature = "aaabb"
+	threeOfAKind signature = "aaabc"
+	twoPair      signature = "aabbc"
+	onePair      signature = "aabcd"
+	highCard     signature = "abcde"
+)
 
+func handSignature(h hand, withJokers bool) signature {
 	// The best possible strategy when playing with jokers is to let each joker
 	// count as the most frequent non-joker card. If we are playing with jokers,
 	// we "take out" the jokers, remember their count, and then add their count
 	// to the most frequent card when we've found it.
 	jokerCount := 0
-	freq := make(map[card]int, len(h))
+	freq := make(map[card]int)
 	for _, c := range h {
 		freq[c]++
 	}
 	if withJokers {
 		jokerCount = freq[joker]
 		delete(freq, joker)
-	}
-	// If playing without jokers:
-	// jokerCount = 0
-	// freq[K]    = 2
-	// freq[8]    = 2
-	// freq[J]    = 1
-	//
-	// If playing with jokers:
-	// jokerCount = 1
-	// freq[K]    = 2
-	// freq[8]    = 2
-
-	counts := maps.Values(freq)
-	// If playing without jokers:
-	// counts = {K=2, J=1, 8=2}
-	//
-	// If playing with jokers:
-	// counts = {K=2, 8=2}
-	//
-	// In both cases the order is unspecified.
-
-	// Sort in descending order.
-	slices.SortFunc(counts, func(a, b int) int { return cmp.Compare(b, a) })
-	// If playing without jokers:
-	// counts = [K=2, 8=2, J=1]
-	//
-	// If playing with jokers:
-	// counts = [K=2, 8=2]
-	//
-	// In both cases the order between K and 8 is unspecified.
-
-	if withJokers {
-		// As an edge case, we might have a hand like JJJJJ. After taking out
-		// the jokers `counts` would be empty.
-		if len(counts) == 0 {
-			counts = []int{5} // For the 5 jokers.
-		} else {
-			counts[0] += jokerCount
+		// Special case: a hand of only jokers is a "five of a kind" hand.
+		if len(freq) == 0 {
+			return fiveOfAKind
 		}
-		// Following the example:
-		// counts = [K=3, 8=2] _or_ [8=3, K=2] -- both are equivalent.
 	}
-
-	sig := make([]rune, 0, len(h))
-	class := 'a'
-	for _, n := range counts {
-		for i := 0; i < n; i++ {
-			sig = append(sig, class)
-		}
-		// If playing without jokers:
-		// After iteration 1: sig = ['a', 'a']                  counts = [ (2),  2 ,  1 ]
-		// After iteration 2: sig = ['a', 'a', 'b', 'b']        counts = [  2 , (2),  1 ]
-		// After iteration 3: sig = ['a', 'a', 'b', 'b', 'c']   counts = [  2 ,  2 , (1)]
-		//
-		// If playing with jokers:
-		// After iteration 1: sig = ['a', 'a', 'a']             counts = [ (3),  2  ]
-		// After iteration 2: sig = ['a', 'a', 'a', 'b', 'b']   counts = [  2 , (2) ]
-		class++
+	// The signature of a hand can be determined by the combination of how many
+	// there are of the most frequent card, and how many different cards there
+	// are.
+	//
+	// This idea is not mine; it was taken from another AoC solution:
+	// https://github.com/ViddeM/advent-of-code-2023/blob/4c536cdd0c46f480f5dd3e829d2014f3fcccf451/day07/src/solution.rs#L41-L61
+	max := slices.Max(maps.Values(freq)) + jokerCount
+	labels := len(freq)
+	switch {
+	case max == 5:
+		return fiveOfAKind
+	case max == 4:
+		return fourOfAKind
+	case max == 3 && labels == 2:
+		return fullHouse
+	case max == 3 && labels == 3:
+		return threeOfAKind
+	case max == 2 && labels == 3:
+		return twoPair
+	case max == 2 && labels == 4:
+		return onePair
+	case max == 1:
+		return highCard
+	default:
+		panic(fmt.Sprintf("invalid signature for %s (with jokers = %v)", h, withJokers))
 	}
-	return signature(sig)
 }
 
 // compareSignatures returns a negative number if a is weaker than b; zero if
