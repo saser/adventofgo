@@ -104,33 +104,19 @@ func compareHands(a, b hand) int {
 }
 
 // signature represents the "type" of a hand, as described in the problem
-// description. A signature is a string whose characters are ordered in
-// ascending order, and where each character is a "class" of card. The first
-// class is 'a', the second is 'b', etc. Two different classes always represent
-// two different cards.
-//
-// For example: a signature like "aabbc" means that:
-//
-//   - There are two cards of class 'a'
-//   - There are two cards of class 'b'
-//   - There is one card of class 'c'
-//
-// An example of a hand matching this would be "KJKAJ" -- there are two kings,
-// two jacks, and one ace.
-//
-// Signatures have the interesting property that in this particular game, the
-// ascending alphabetical order of signatures is the same as the descending
-// order of hand "types" (from strongest to weakest):
-type signature string
+// description. I'm avoiding the word "type" as it is a reserved keyword in Go.
+type signature int
 
+// Defining the types in this order corresponds to the ordering from weaker to
+// stronger signatures.
 const (
-	fiveOfAKind  signature = "aaaaa"
-	fourOfAKind  signature = "aaaab"
-	fullHouse    signature = "aaabb"
-	threeOfAKind signature = "aaabc"
-	twoPair      signature = "aabbc"
-	onePair      signature = "aabcd"
-	highCard     signature = "abcde"
+	highCard signature = iota
+	onePair
+	twoPair
+	threeOfAKind
+	fullHouse
+	fourOfAKind
+	fiveOfAKind
 )
 
 func handSignature(h hand, withJokers bool) signature {
@@ -177,15 +163,6 @@ func handSignature(h hand, withJokers bool) signature {
 	default:
 		panic(fmt.Sprintf("invalid signature for %s (with jokers = %v)", h, withJokers))
 	}
-}
-
-// compareSignatures returns a negative number if a is weaker than b; zero if
-// they are equal; and a positive number if a is stronger than b.
-func compareSignatures(a, b signature) int {
-	// Ascending alphabetical order of signatures results in a descending order
-	// of strength. By flipping the arguments to cmp.Compare, we get descending
-	// alphabetical order => ascending order of strength.
-	return cmp.Compare(b, a)
 }
 
 type bid struct {
@@ -238,7 +215,7 @@ func solve(input string, part int) (string, error) {
 	// be the first element. This corresponds well to the ranks in the problem
 	// description: the weakest bid will have the lowest rank, i.e. rank 1.
 	slices.SortFunc(bids, func(a, b bid) int {
-		if n := compareSignatures(handSignature(a.Hand, withJokers), handSignature(b.Hand, withJokers)); n != 0 {
+		if n := cmp.Compare(handSignature(a.Hand, withJokers), handSignature(b.Hand, withJokers)); n != 0 {
 			return n
 		}
 		return compareHands(a.Hand, b.Hand)
