@@ -13,7 +13,7 @@ type node struct {
 	Left, Right string
 }
 
-var nodeRE = regexp.MustCompile(`([A-Z]{3}) = \(([A-Z]{3}), ([A-Z]{3})\)`)
+var nodeRE = regexp.MustCompile(`(\w{3}) = \((\w{3}), (\w{3})\)`)
 
 func parseNode(s string) (node, error) {
 	matches := nodeRE.FindStringSubmatch(s)
