@@ -1,7 +1,6 @@
 package day08
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 
@@ -28,9 +27,6 @@ func parseNode(s string) (node, error) {
 }
 
 func solve(input string, part int) (string, error) {
-	if part == 2 {
-		return "", errors.New("unimplemented")
-	}
 	lines := striter.OverLines(input)
 	instructions, _ := lines.Next() // Assume correct input.
 	_, _ = lines.Next()             // Skip over empty line.
@@ -42,22 +38,40 @@ func solve(input string, part int) (string, error) {
 		}
 		nodes[n.Name] = n
 	}
-	current := "AAA"
+	var currents []string
+	if part == 1 {
+		currents = []string{"AAA"}
+	} else {
+		for name := range nodes {
+			if name[2] == 'A' {
+				currents = append(currents, name)
+			}
+		}
+	}
 	steps := 0
 	i := 0
-	for current != "ZZZ" {
+	for {
 		instr := instructions[i]
 		i++
 		if i == len(instructions) {
 			i = 0
 		}
-		switch instr {
-		case 'L':
-			current = nodes[current].Left
-		case 'R':
-			current = nodes[current].Right
+		onZ := 0
+		for j := range currents {
+			switch instr {
+			case 'L':
+				currents[j] = nodes[currents[j]].Left
+			case 'R':
+				currents[j] = nodes[currents[j]].Right
+			}
+			if currents[j][2] == 'Z' {
+				onZ++
+			}
 		}
 		steps++
+		if onZ == len(currents) {
+			break
+		}
 	}
 	return fmt.Sprint(steps), nil
 }
