@@ -7,6 +7,10 @@ import (
 	"strings"
 )
 
+type Pos struct {
+	Row, Col int
+}
+
 // Grid is a 2D grid of ASCII characters.
 type Grid struct {
 	s string
@@ -69,14 +73,18 @@ func (g *Grid) NCols() int {
 
 // Get returns the ASCII character at the given row and columns (0-indexed) in
 // the grid. Get panics if either row or col is out of bounds.
-func (g *Grid) Get(row, col int) byte {
-	if row < 0 || row >= g.nRows || col < 0 || col >= g.nCols {
-		panic(fmt.Errorf("asciigrid: Get(row = %d, col = %d) is out of bounds for grid with %d rows and %d cols", row, col, g.nRows, g.nCols))
+func (g *Grid) Get(p Pos) byte {
+	if !g.InBounds(p) {
+		panic(fmt.Errorf("asciigrid: Get(row = %d, col = %d) is out of bounds for grid with %d rows and %d cols", p.Row, p.Col, g.nRows, g.nCols))
 	}
 	// For each full row, skip over all the columns plus the newline at the end.
 	// Then, skip to the right column.
-	i := row*(g.nCols+1) + col
+	i := p.Row*(g.nCols+1) + p.Col
 	return g.s[i]
+}
+
+func (g *Grid) InBounds(p Pos) bool {
+	return p.Row >= 0 && p.Row < g.NRows() && p.Col >= 0 && p.Col < g.NCols()
 }
 
 // Iter represents an iterator over bytes in a string. It is intended to be very
@@ -86,7 +94,7 @@ type Iter interface {
 	// Next returns the next byte in the iteration if there is one, and reports
 	// whether the returned value is valid. Once Next returns ok==false, the
 	// iteration is over, and all subsequent calls will return ok==false.
-	Next() (b byte, ok bool)
+	Next() (p Pos, b byte, ok bool)
 }
 
 // RowIter is an Iter over a single row in the grid. It iterates from left to
@@ -104,13 +112,14 @@ type RowIter struct {
 
 var _ Iter = (*RowIter)(nil)
 
-func (i *RowIter) Next() (byte, bool) {
+func (i *RowIter) Next() (Pos, byte, bool) {
 	if i.col >= i.g.NCols() {
-		return 0, false
+		return Pos{}, 0, false
 	}
-	b := i.g.Get(i.row, i.col)
+	p := Pos{Row: i.row, Col: i.col}
+	b := i.g.Get(p)
 	i.col++
-	return b, true
+	return p, b, true
 }
 
 // Row returns an iterator over the given row. Row panics if row is out of bounds.
@@ -140,13 +149,14 @@ type ColIter struct {
 
 var _ Iter = (*ColIter)(nil)
 
-func (i *ColIter) Next() (byte, bool) {
+func (i *ColIter) Next() (Pos, byte, bool) {
 	if i.row >= i.g.NRows() {
-		return 0, false
+		return Pos{}, 0, false
 	}
-	b := i.g.Get(i.row, i.col)
+	p := Pos{Row: i.row, Col: i.col}
+	b := i.g.Get(p)
 	i.row++
-	return b, true
+	return p, b, true
 }
 
 // Col returns an iterator over the given column. Col panics if col is out of

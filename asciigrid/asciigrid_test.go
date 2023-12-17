@@ -17,9 +17,21 @@ func newT(t *testing.T, s string) *Grid {
 	return g
 }
 
+func collect2(i Iter) ([]Pos, string) {
+	var (
+		ps []Pos
+		bs []byte
+	)
+	for p, b, ok := i.Next(); ok; p, b, ok = i.Next() {
+		ps = append(ps, p)
+		bs = append(bs, b)
+	}
+	return ps, string(bs)
+}
+
 func collect(i Iter) string {
 	var bs []byte
-	for b, ok := i.Next(); ok; b, ok = i.Next() {
+	for _, b, ok := i.Next(); ok; _, b, ok = i.Next() {
 		bs = append(bs, b)
 	}
 	return string(bs)
@@ -119,7 +131,7 @@ abcde
 	var got []string
 	for row := 0; row < g.NRows(); row++ {
 		for col := 0; col < g.NCols(); col++ {
-			got = append(got, string([]byte{g.Get(row, col)}))
+			got = append(got, string([]byte{g.Get(Pos{Row: row, Col: col})}))
 		}
 	}
 	want := []string{
@@ -134,20 +146,24 @@ abcde
 
 func TestGrid_Row(t *testing.T) {
 	for _, tt := range []struct {
-		s    string
-		want []string
+		s         string
+		wantPos   [][]Pos
+		wantBytes []string
 	}{
 		{
-			s:    "",
-			want: nil,
+			s:         "",
+			wantPos:   nil,
+			wantBytes: nil,
 		},
 		{
-			s:    "#",
-			want: []string{"#"},
+			s:         "#",
+			wantPos:   [][]Pos{{{Row: 0, Col: 0}}},
+			wantBytes: []string{"#"},
 		},
 		{
-			s:    "##############\n\n\n\n\n\n\n",
-			want: []string{"##############"},
+			s:         "#####\n\n\n\n\n\n\n",
+			wantPos:   [][]Pos{{{Row: 0, Col: 0}, {Row: 0, Col: 1}, {Row: 0, Col: 2}, {Row: 0, Col: 3}, {Row: 0, Col: 4}}},
+			wantBytes: []string{"#####"},
 		},
 		{
 			s: strings.TrimSpace(`
@@ -155,36 +171,57 @@ abc
 def
 ghi
 `),
-			want: []string{"abc", "def", "ghi"},
+			wantPos: [][]Pos{
+				{{Row: 0, Col: 0}, {Row: 0, Col: 1}, {Row: 0, Col: 2}},
+				{{Row: 1, Col: 0}, {Row: 1, Col: 1}, {Row: 1, Col: 2}},
+				{{Row: 2, Col: 0}, {Row: 2, Col: 1}, {Row: 2, Col: 2}},
+			},
+			wantBytes: []string{"abc", "def", "ghi"},
 		},
 	} {
 		g := newT(t, tt.s)
-		var got []string
+		var gotPos [][]Pos
+		var gotBytes []string
 		for row := 0; row < g.NRows(); row++ {
-			got = append(got, collect(g.Row(row)))
+			ps, bs := collect2(g.Row(row))
+			gotPos = append(gotPos, ps)
+			gotBytes = append(gotBytes, bs)
 		}
-		if diff := cmp.Diff(tt.want, got, cmpopts.EquateEmpty()); diff != "" {
-			t.Errorf("New(%q): unexpected result from iterating over all Row() iterators (-want +got)\n%s", tt.s, diff)
+		if diff := cmp.Diff(tt.wantPos, gotPos, cmpopts.EquateEmpty()); diff != "" {
+			t.Errorf("New(%q): unexpected positions from iterating over all Row() iterators (-want +got)\n%s", tt.s, diff)
+		}
+		if diff := cmp.Diff(tt.wantBytes, gotBytes, cmpopts.EquateEmpty()); diff != "" {
+			t.Errorf("New(%q): unexpected bytes from iterating over all Row() iterators (-want +got)\n%s", tt.s, diff)
 		}
 	}
 }
 
 func TestGrid_Col(t *testing.T) {
 	for _, tt := range []struct {
-		s    string
-		want []string
+		s         string
+		wantPos   [][]Pos
+		wantBytes []string
 	}{
 		{
-			s:    "",
-			want: nil,
+			s:         "",
+			wantPos:   nil,
+			wantBytes: nil,
 		},
 		{
-			s:    "#",
-			want: []string{"#"},
+			s:         "#",
+			wantPos:   [][]Pos{{{Row: 0, Col: 0}}},
+			wantBytes: []string{"#"},
 		},
 		{
-			s:    "#####\n\n\n\n\n\n\n",
-			want: []string{"#", "#", "#", "#", "#"},
+			s: "#####\n\n\n\n\n\n\n",
+			wantPos: [][]Pos{
+				{{Row: 0, Col: 0}},
+				{{Row: 0, Col: 1}},
+				{{Row: 0, Col: 2}},
+				{{Row: 0, Col: 3}},
+				{{Row: 0, Col: 4}},
+			},
+			wantBytes: []string{"#", "#", "#", "#", "#"},
 		},
 		{
 			s: strings.TrimSpace(`
@@ -192,16 +229,27 @@ abc
 def
 ghi
 `),
-			want: []string{"adg", "beh", "cfi"},
+			wantPos: [][]Pos{
+				{{Row: 0, Col: 0}, {Row: 1, Col: 0}, {Row: 2, Col: 0}},
+				{{Row: 0, Col: 1}, {Row: 1, Col: 1}, {Row: 2, Col: 1}},
+				{{Row: 0, Col: 2}, {Row: 1, Col: 2}, {Row: 2, Col: 2}},
+			},
+			wantBytes: []string{"adg", "beh", "cfi"},
 		},
 	} {
 		g := newT(t, tt.s)
-		var got []string
+		var gotPos [][]Pos
+		var gotBytes []string
 		for col := 0; col < g.NCols(); col++ {
-			got = append(got, collect(g.Col(col)))
+			ps, bs := collect2(g.Col(col))
+			gotPos = append(gotPos, ps)
+			gotBytes = append(gotBytes, bs)
 		}
-		if diff := cmp.Diff(tt.want, got, cmpopts.EquateEmpty()); diff != "" {
-			t.Errorf("New(%q): unexpected result from iterating over all Row() iterators (-want +got)\n%s", tt.s, diff)
+		if diff := cmp.Diff(tt.wantPos, gotPos, cmpopts.EquateEmpty()); diff != "" {
+			t.Errorf("New(%q): unexpected positions from iterating over all Col() iterators (-want +got)\n%s", tt.s, diff)
+		}
+		if diff := cmp.Diff(tt.wantBytes, gotBytes, cmpopts.EquateEmpty()); diff != "" {
+			t.Errorf("New(%q): unexpected bytes from iterating over all Col() iterators (-want +got)\n%s", tt.s, diff)
 		}
 	}
 }
