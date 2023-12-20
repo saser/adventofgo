@@ -20,9 +20,14 @@ func splitModule(s string) (*striter.Joined, error) {
 }
 
 type module interface {
+	// Name is the name of the module.
 	Name() string
+	// Next is the ordered list of downstream modules to which pulses are sent.
 	Next() []string
-	Recv(mod string, sig bool) bool
+	// Recv tells the module to process the given in pulse from the named
+	// module. The out pulse is valid only if ok is true; ok is false if no
+	// pulse was sent downstream from this module.
+	Recv(mod string, in bool) (out bool, ok bool)
 }
 
 type broadcastModule struct {
@@ -47,37 +52,46 @@ func parseBroadcastModule(s string) (broadcastModule, error) {
 	}, nil
 }
 
-func (m broadcastModule) Name() string                 { return "broadcaster" }
-func (m broadcastModule) Next() []string               { return m.next }
-func (m broadcastModule) Recv(_ string, sig bool) bool { return sig }
+func (m broadcastModule) Name() string                        { return "broadcaster" }
+func (m broadcastModule) Next() []string                      { return m.next }
+func (m broadcastModule) Recv(_ string, in bool) (bool, bool) { return in, true }
 
 type flipflopModule struct {
-	name string
-	next []string
+	name  string
+	next  []string
+	state bool
 }
 
-func parseFlipFlopModule(s string) (flipflopModule, error) {
+func parseFlipFlopModule(s string) (*flipflopModule, error) {
 	parts, err := splitModule(s)
 	if err != nil {
-		return flipflopModule{}, fmt.Errorf("parse flip-flop module: %v", err)
+		return nil, fmt.Errorf("parse flip-flop module: %v", err)
 	}
 	name, _ := parts.Next()
 	if name[0] != '%' {
-		return flipflopModule{}, fmt.Errorf("parse flip-flop module: %q doesn't being with '%%'", name)
+		return nil, fmt.Errorf("parse flip-flop module: %q doesn't being with '%%'", name)
 	}
 	var next []string
 	for part, ok := parts.Next(); ok; part, ok = parts.Next() {
 		next = append(next, part)
 	}
-	return flipflopModule{
-		name: name[1:], // Skip over '%'.
-		next: next,
+	return &flipflopModule{
+		name:  name[1:], // Skip over '%'.
+		next:  next,
+		state: false,
 	}, nil
 }
 
-func (m flipflopModule) Name() string                 { return m.name }
-func (m flipflopModule) Next() []string               { return m.next }
-func (m flipflopModule) Recv(_ string, sig bool) bool { return !sig }
+func (m *flipflopModule) Name() string   { return m.name }
+func (m *flipflopModule) Next() []string { return m.next }
+func (m *flipflopModule) Recv(_ string, in bool) (bool, bool) {
+	if !in { // Low pulse -> flip and send pulse.
+		m.state = !m.state
+		return m.state, true
+	}
+	// High pulse -> nothing happens.
+	return false, false
+}
 
 type conjunctionModule struct {
 	name   string
@@ -105,16 +119,24 @@ func parseConjunctionModule(s string) (*conjunctionModule, error) {
 	}, nil
 }
 
-func (m conjunctionModule) Name() string   { return m.name }
-func (m conjunctionModule) Next() []string { return m.next }
-func (m *conjunctionModule) Recv(mod string, sig bool) bool {
+func (m *conjunctionModule) Name() string   { return m.name }
+func (m *conjunctionModule) Next() []string { return m.next }
+func (m *conjunctionModule) Recv(mod string, sig bool) (bool, bool) {
+	if _, ok := m.inputs[mod]; !ok {
+		panic(fmt.Errorf("conjunction module %q has no input named %q", m.Name(), mod))
+	}
 	m.inputs[mod] = sig
 	out := true
 	for _, v := range m.inputs {
 		out = out && v
 	}
-	return out
+	// All high pulses -> send low pulse.
+	return !out, true
 }
+
+// AddInput defines mod as an input to this module and sets its value to false
+// (low pulse).
+func (m *conjunctionModule) AddInput(mod string) { m.inputs[mod] = false }
 
 type circuit struct {
 	Modules           map[string]module
@@ -142,6 +164,14 @@ func parse(input string) (*circuit, error) {
 		}
 		c.Modules[m.Name()] = m
 	}
+	for srcName, srcMod := range c.Modules {
+		for _, dstName := range srcMod.Next() {
+			dstMod := c.Modules[dstName]
+			if c, ok := dstMod.(*conjunctionModule); ok {
+				c.AddInput(srcName)
+			}
+		}
+	}
 	return c, nil
 }
 
@@ -166,7 +196,11 @@ func (c *circuit) PressButton() {
 			// Sent to output module, so we just skip it for now.
 			continue
 		}
-		sig := mod.Recv(s.From, s.Sig)
+		sig, ok := mod.Recv(s.From, s.Sig)
+		if !ok {
+			// No pulse was sent downstream.
+			continue
+		}
 		for _, dst := range mod.Next() {
 			s2 := send{
 				From: mod.Name(),
