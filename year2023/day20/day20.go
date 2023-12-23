@@ -94,9 +94,10 @@ func (m *flipflopModule) Recv(_ string, in bool) (bool, bool) {
 }
 
 type conjunctionModule struct {
-	name   string
-	next   []string
-	inputs map[string]bool
+	name     string
+	next     []string
+	inputs   map[string]bool
+	lastSent bool
 }
 
 func parseConjunctionModule(s string) (*conjunctionModule, error) {
@@ -113,25 +114,31 @@ func parseConjunctionModule(s string) (*conjunctionModule, error) {
 		next = append(next, part)
 	}
 	return &conjunctionModule{
-		name:   name[1:], // Skip over '&'.
-		next:   next,
-		inputs: make(map[string]bool),
+		name:     name[1:], // Skip over '&'.
+		next:     next,
+		inputs:   make(map[string]bool),
+		lastSent: true, // Since all inputs are considered low initially, the "last sent" pulse would have been high.
 	}, nil
 }
 
 func (m *conjunctionModule) Name() string   { return m.name }
 func (m *conjunctionModule) Next() []string { return m.next }
 func (m *conjunctionModule) Recv(mod string, sig bool) (bool, bool) {
-	if _, ok := m.inputs[mod]; !ok {
+	prev, ok := m.inputs[mod]
+	if !ok {
 		panic(fmt.Errorf("conjunction module %q has no input named %q", m.Name(), mod))
 	}
+	if sig == prev {
+		return m.lastSent, true
+	}
 	m.inputs[mod] = sig
-	out := true
-	for _, v := range m.inputs {
-		out = out && v
+	allHigh := true
+	for _, high := range m.inputs {
+		allHigh = allHigh && high
 	}
 	// All high pulses -> send low pulse.
-	return !out, true
+	m.lastSent = !allHigh
+	return m.lastSent, true
 }
 
 // AddInput defines mod as an input to this module and sets its value to false
@@ -144,7 +151,9 @@ type circuit struct {
 }
 
 func parse(input string) (*circuit, error) {
-	c := &circuit{Modules: make(map[string]module)}
+	c := &circuit{
+		Modules: make(map[string]module),
+	}
 	lines := striter.OverLines(input)
 	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
 		var (
