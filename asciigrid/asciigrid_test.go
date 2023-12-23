@@ -37,6 +37,10 @@ func collect(i Iter) string {
 	return string(bs)
 }
 
+func TestDeleteMeAfterDay23(t *testing.T) {
+	t.Fatal("Delete me and the Direction type after solving day 23")
+}
+
 func TestNew(t *testing.T) {
 	for _, s := range []string{
 		"",

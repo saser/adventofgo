@@ -3,17 +3,195 @@
 package asciigrid
 
 import (
+	"bytes"
 	"fmt"
-	"strings"
 )
 
+// Direction represents the vertical, horizontal, and diagonal directions in the
+// grid. A Direction's value is based on the assumption that rows increase from
+// top to bottom and columns increase from left to right. To illustrate, a
+// direction represents any of the positions marked 'O' from the perspective of
+// the position p:
+//
+//	.....
+//	.OOO.
+//	.OpO.
+//	.OOO.
+//	.....
+type Direction int
+
+const (
+	// None is the lack of a direction. Taking a step in direction None leaves you in the same place.
+	None Direction = iota
+	//	.....
+	//	..O..
+	//	..p..
+	//	.....
+	//	.....
+	Up
+	//	.....
+	//	.....
+	//	..p..
+	//	..O..
+	//	.....
+	Down
+	//	.....
+	//	.....
+	//	.Op..
+	//	.....
+	//	.....
+	Left
+	//	.....
+	//	.....
+	//	..pO.
+	//	.....
+	//	.....
+	Right
+	//	.....
+	//	.O...
+	//	..p..
+	//	.....
+	//	.....
+	TopLeft
+	//	.....
+	//	...O.
+	//	..p..
+	//	.....
+	//	.....
+	TopRight
+	//	.....
+	//	.....
+	//	..p..
+	//	.O...
+	//	.....
+	BottomLeft
+	//	.....
+	//	.....
+	//	..p..
+	//	...O.
+	//	.....
+	BottomRight
+)
+
+// Inverse returns the inverse direction. It has the property that for a
+// position p and direction d:
+//
+//	p.Step(d).Step(d.Inverse()) == p
+func (d Direction) Inverse() Direction {
+	switch d {
+	case None:
+		return None
+	case Up:
+		return Down
+	case Down:
+		return Up
+	case Left:
+		return Right
+	case Right:
+		return Left
+	case TopLeft:
+		return BottomRight
+	case TopRight:
+		return BottomLeft
+	case BottomLeft:
+		return TopRight
+	case BottomRight:
+		return TopLeft
+	default:
+		panic(fmt.Errorf("invalid direction %d", d))
+	}
+}
+
+// Pos represents a position in the grid. Rows and columns are 0-indexed. Rows
+// increase from top to bottom and columns increase from left to right.
 type Pos struct {
 	Row, Col int
 }
 
+// Step returns the position a single step in the given direction.
+func (p Pos) Step(d Direction) Pos {
+	return p.StepN(d, 1)
+}
+
+// StepN is like Step but takes n steps in the given direction.
+func (p Pos) StepN(d Direction, n int) Pos {
+	p2 := p
+	switch d {
+	case None:
+		// Nothing happens.
+	case Up:
+		p2.Row -= n
+	case Down:
+		p2.Row += n
+	case Left:
+		p2.Col -= n
+	case Right:
+		p2.Col += n
+	case TopLeft:
+		p2.Row -= n
+		p2.Col -= n
+	case TopRight:
+		p2.Row -= n
+		p2.Col += n
+	case BottomLeft:
+		p2.Row += n
+		p2.Col -= n
+	case BottomRight:
+		p2.Row += n
+		p2.Col += n
+	}
+	return p2
+}
+
+// Neighbors4 returns the four direct neighbors (marked 'O' below) to the given
+// position:
+//
+//	.....
+//	..O..
+//	.OpO.
+//	..O..
+//	.....
+//
+// It has the property that:
+//
+//	Neighbors4()[dir] == p.Step(dir)
+func (p Pos) Neighbors4() map[Direction]Pos {
+	return map[Direction]Pos{
+		Up:    {Row: p.Row - 1, Col: p.Col},
+		Down:  {Row: p.Row + 1, Col: p.Col},
+		Left:  {Row: p.Row, Col: p.Col - 1},
+		Right: {Row: p.Row, Col: p.Col + 1},
+	}
+}
+
+// Neighbors4 returns the eight neighbors (marked 'O' below) to the given
+// position:
+//
+//	.....
+//	.OOO.
+//	.OpO.
+//	.OOO.
+//	.....
+//
+// It has the property that:
+//
+//	Neighbors8()[dir] == p.Step(dir)
+func (p Pos) Neighbors8() map[Direction]Pos {
+	return map[Direction]Pos{
+		Up:          {Row: p.Row - 1, Col: p.Col},
+		Down:        {Row: p.Row + 1, Col: p.Col},
+		Left:        {Row: p.Row, Col: p.Col - 1},
+		Right:       {Row: p.Row, Col: p.Col + 1},
+		TopLeft:     {Row: p.Row - 1, Col: p.Col - 1},
+		TopRight:    {Row: p.Row - 1, Col: p.Col + 1},
+		BottomLeft:  {Row: p.Row + 1, Col: p.Col - 1},
+		BottomRight: {Row: p.Row + 1, Col: p.Col + 1},
+	}
+}
+
 // Grid is a 2D grid of ASCII characters.
 type Grid struct {
-	s string
+	rows [][]byte
 
 	nRows, nCols int
 }
@@ -22,8 +200,9 @@ type Grid struct {
 // columns in the first row determines the number of columns in all rows, and
 // returns an error if a row with a different number of columns is found.
 func New(s string) (*Grid, error) {
-	g := &Grid{s: strings.TrimSpace(s)}
-	if len(g.s) == 0 {
+	bs := bytes.TrimSpace([]byte(s))
+	g := &Grid{}
+	if len(bs) == 0 {
 		// Special case: this is a completely empty grid, which is valid.
 		// Setting these fields to 0 is redundant, as their values already are
 		// 0, but it helps readability a bit.
@@ -31,22 +210,25 @@ func New(s string) (*Grid, error) {
 		g.nCols = 0
 		return g, nil
 	}
-	g.nCols = strings.IndexByte(g.s, '\n')
+	g.nCols = bytes.IndexByte(bs, '\n')
 	if g.nCols == -1 {
 		// Special case: this is a grid with a single line, which is valid.
+		g.rows = [][]byte{bs}
 		g.nRows = 1
-		g.nCols = len(g.s)
+		g.nCols = len(bs)
 		return g, nil
 	}
-	for i := 0; i < len(g.s); i += g.nCols + 1 {
-		rest := g.s[i:]
-		newline := strings.IndexByte(rest, '\n')
+	for i := 0; i < len(bs); i += g.nCols + 1 {
+		rest := bs[i:]
+		newline := bytes.IndexByte(rest, '\n')
 		if newline == -1 {
 			newline = len(rest)
 		}
-		if rowLen := len(rest[:newline]); rowLen != g.nCols {
+		row := rest[:newline]
+		if rowLen := len(row); rowLen != g.nCols {
 			return nil, fmt.Errorf("asciigrid: row %d has %d columns, expected %d", g.nRows, rowLen, g.nCols)
 		}
+		g.rows = append(g.rows, row)
 		g.nRows++
 	}
 	return g, nil
@@ -71,20 +253,55 @@ func (g *Grid) NCols() int {
 	return g.nCols
 }
 
-// Get returns the ASCII character at the given row and columns (0-indexed) in
-// the grid. Get panics if either row or col is out of bounds.
+// Index represents a position within a grid as a single integer. Use
+// (*Grid).Index to construct these values and (*Grid).Pos to convert them back
+// to positions.
+type Index int
+
+// Index returns the index which corresponds to p. The return value of Index(p) is
+// only valid if InBounds(p) == true.
+func (g *Grid) Index(p Pos) Index {
+	// For each full row, skip over all the columns plus the newline at the end.
+	// Then, skip to the right column.
+	return Index(p.Row*g.nCols + p.Col)
+}
+
+// Pos converts the given index, assumed to be created by g.Index, into the
+// corresponding position.
+func (g *Grid) Pos(i Index) Pos {
+	return Pos{
+		Row: int(i) / g.nCols,
+		Col: int(i) % g.nCols,
+	}
+}
+
+// Get returns the ASCII character at the given position in the grid. Get panics
+// if p is out of bounds.
 func (g *Grid) Get(p Pos) byte {
 	if !g.InBounds(p) {
 		panic(fmt.Errorf("asciigrid: Get(row = %d, col = %d) is out of bounds for grid with %d rows and %d cols", p.Row, p.Col, g.nRows, g.nCols))
 	}
-	// For each full row, skip over all the columns plus the newline at the end.
-	// Then, skip to the right column.
-	i := p.Row*(g.nCols+1) + p.Col
-	return g.s[i]
+	return g.rows[p.Row][p.Col]
 }
 
+// Set stores the given ASCII character at the given position. Set panics if p
+// is out of bounds.
+func (g *Grid) Set(p Pos, b byte) {
+	if !g.InBounds(p) {
+		panic(fmt.Errorf("asciigrid: Get(row = %d, col = %d) is out of bounds for grid with %d rows and %d cols", p.Row, p.Col, g.nRows, g.nCols))
+	}
+	g.rows[p.Row][p.Col] = b
+}
+
+// InBounds reports whether the given position is valid in the grid.
 func (g *Grid) InBounds(p Pos) bool {
 	return p.Row >= 0 && p.Row < g.NRows() && p.Col >= 0 && p.Col < g.NCols()
+}
+
+// String returns the string (including newlines) that the Grid currently
+// represents.
+func (g *Grid) String() string {
+	return string(bytes.Join(g.rows, []byte{'\n'}))
 }
 
 // Iter represents an iterator over bytes in a string. It is intended to be very
