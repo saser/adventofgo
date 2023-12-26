@@ -182,3 +182,125 @@ func TestSpan_Contains(t *testing.T) {
 		}
 	}
 }
+
+func TestSpan_Split(t *testing.T) {
+	for _, tt := range []struct {
+		s          Span[int]
+		v          int
+		wantFirst  Span[int]
+		wantSecond Span[int]
+	}{
+		{
+			s:          New(1, 10),
+			v:          4,
+			wantFirst:  New(1, 4),
+			wantSecond: New(4, 10),
+		},
+		{
+			s:          New(1, 10),
+			v:          0,
+			wantFirst:  New(1, 10),
+			wantSecond: Empty[int](),
+		},
+		{
+			s:          New(1, 10),
+			v:          11,
+			wantFirst:  New(1, 10),
+			wantSecond: Empty[int](),
+		},
+		{
+			s:          New(1, 10),
+			v:          1,
+			wantFirst:  New(1, 10),
+			wantSecond: Empty[int](),
+		},
+		{
+			s:          New(1, 10),
+			v:          10,
+			wantFirst:  New(1, 10),
+			wantSecond: Empty[int](),
+		},
+	} {
+		gotFirst, gotSecond := tt.s.Split(tt.v)
+		if gotFirst != tt.wantFirst {
+			t.Errorf("(%v).Split(%v) first = %v; want %v", tt.s, tt.v, gotFirst, tt.wantFirst)
+		}
+		if gotSecond != tt.wantSecond {
+			t.Errorf("(%v).Split(%v) second = %v; want %v", tt.s, tt.v, gotSecond, tt.wantSecond)
+		}
+	}
+}
+
+func TestSpan_SplitOver(t *testing.T) {
+	for _, tt := range []struct {
+		s    Span[int]
+		t    Span[int]
+		want []Span[int]
+	}{
+		{
+			s:    New(3, 6),  //    [345]
+			t:    New(0, 10), // [0123456789]
+			want: []Span[int]{New(3, 6)},
+		},
+		{
+			s: New(0, 10), // [0123456789]
+			t: New(3, 6),  //    [345]
+			want: []Span[int]{
+				New(0, 3),  // [012]
+				New(3, 6),  //    [345]
+				New(6, 10), //       [6789]
+			},
+		},
+		{
+			s: New(0, 10), // [0123456789]
+			t: New(0, 6),  // [012345]
+			want: []Span[int]{
+				New(0, 6),  // [012345]
+				New(6, 10), //       [6789]
+			},
+		},
+		{
+			s: New(0, 10), // [0123456789]
+			t: New(4, 10), //     [456789]
+			want: []Span[int]{
+				New(0, 4),  // [0123]
+				New(4, 10), //     [456789]
+			},
+		},
+		{
+			s: New(0, 5),  // [01234]
+			t: New(5, 10), //      [56789]
+			want: []Span[int]{
+				New(0, 5), // [01234]
+			},
+		},
+		{
+			s: New(5, 10), //      [56789]
+			t: New(0, 5),  // [01234]
+			want: []Span[int]{
+				New(5, 10), // [56789]
+			},
+		},
+		{
+			s: New(0, 7),  // [0123456]
+			t: New(4, 10), //     [456789]
+			want: []Span[int]{
+				New(0, 4), // [0123]
+				New(4, 7), //     [456]
+			},
+		},
+		{
+			s: New(4, 10), //     [456789]
+			t: New(0, 7),  // [0123456]
+			want: []Span[int]{
+				New(4, 7),  // [456]
+				New(7, 10), //    [789]
+			},
+		},
+	} {
+		got := tt.s.SplitOver(tt.t)
+		if diff := cmp.Diff(tt.want, got); diff != "" {
+			t.Errorf("(%v).SplitOver(%v) returned unexpected result (-want +got)\n%s", tt.s, tt.t, diff)
+		}
+	}
+}

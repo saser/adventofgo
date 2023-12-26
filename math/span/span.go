@@ -80,3 +80,79 @@ func (s Span[T]) Contains(v T) int {
 func (s Span[T]) String() string {
 	return fmt.Sprintf("[%d, %d)", s.Start, s.End)
 }
+
+// Split splits s at v into two Spans.
+// If s contains v and two non-empty splits can be created, Split returns:
+//
+//	first  = [s.Start, v)
+//	second = [v, s.End)
+//
+// Otherwise, Split returns:
+//
+//	first  = s
+//	second = Empty()
+func (s Span[T]) Split(v T) (first, second Span[T]) {
+	if s.Contains(v) != 0 {
+		return s, Empty[T]()
+	}
+	if v == s.Start {
+		return s, Empty[T]()
+	}
+	first = New(s.Start, v)
+	second = New(v, s.End)
+	return first, second
+}
+
+// SplitOver splits s into one or more non-overlapping spans, based on t. The
+// split happens as follows:
+//
+// t contains s entirely:
+//
+//	s =     aaaaaaaaaa
+//	t = bbbbbbbbbbbbbbbbb
+//	=>    [ iiiiiiiiii ] (= s)
+//
+// s contains t entirely:
+//
+//	s =   aaaaaaaaaaaaaaaaa
+//	t =       bbbbbbbbbb
+//	=>  [ xxxx,
+//	          iiiiiiiiii,
+//	                    yyy ]
+//
+// t contains parts of s:
+//
+//	s =   aaaaaaaaaa
+//	t =       bbbbbbbbbbbbbbbbb
+//	=>  [ xxxx,
+//	          iiiiii ]
+//
+//	s =     aaaaaaaaaaaaaaaaa
+//	t = bbbbbbbbbb
+//	=>    [ iiiiii,
+//	              yyyyyyyyyyy ]
+//
+// t contains no part of s:
+//
+//	s =       aaaaaaaaaaaaaaaaa
+//	t = bbbb
+//	=>      [ yyyyyyyyyyyyyyyyy ]
+//
+//	s =   aaaa
+//	t =         bbbbbbbbbbbbbbbbb
+//	=>  [ xxxx ]
+func (s Span[T]) SplitOver(t Span[T]) []Span[T] {
+	i := Intersection(s, t)
+	if i == Empty[T]() || i == s {
+		return []Span[T]{s}
+	}
+	spans := make([]Span[T], 0, 3)
+	if x := New(s.Start, i.Start); x != Empty[T]() {
+		spans = append(spans, x)
+	}
+	spans = append(spans, i)
+	if y := New(i.End, s.End); y != Empty[T]() {
+		spans = append(spans, y)
+	}
+	return spans
+}
