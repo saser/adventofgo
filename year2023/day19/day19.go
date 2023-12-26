@@ -273,13 +273,13 @@ func (s system) CountAcceptedCombinations() uint64 {
 
 // constraint models a subset of all possible combinations of part ratings.
 type constraint struct {
-	X, M, A, S span.Span
+	X, M, A, S span.Span[int]
 }
 
 // universalConstraint returns a constraint that models all possible
 // combinations of part ratings.
 func universalConstraint() constraint {
-	s := span.Span{Start: 1, End: 4000}
+	s := span.Span[int]{Start: 1, End: 4000}
 	return constraint{
 		X: s,
 		M: s,
@@ -299,7 +299,7 @@ func universalConstraint() constraint {
 //	    }
 func constraintFromCmpRule(r cmpRule) constraint {
 	c := universalConstraint()
-	s := map[byte]*span.Span{
+	s := map[byte]*span.Span[int]{
 		'x': &c.X,
 		'm': &c.M,
 		'a': &c.A,
