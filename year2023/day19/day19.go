@@ -279,7 +279,7 @@ type constraint struct {
 // universalConstraint returns a constraint that models all possible
 // combinations of part ratings.
 func universalConstraint() constraint {
-	s := span.Span[int]{Start: 1, End: 4000}
+	s := span.Span[int]{Start: 1, End: 4001}
 	return constraint{
 		X: s,
 		M: s,
@@ -306,7 +306,7 @@ func constraintFromCmpRule(r cmpRule) constraint {
 		's': &c.S,
 	}[r.XMAS]
 	if r.Less {
-		s.End = r.Value - 1
+		s.End = r.Value
 	} else {
 		s.Start = r.Value + 1
 	}
