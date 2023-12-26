@@ -29,18 +29,6 @@ func collect2(i Iter) ([]Pos, string) {
 	return ps, string(bs)
 }
 
-func collect(i Iter) string {
-	var bs []byte
-	for _, b, ok := i.Next(); ok; _, b, ok = i.Next() {
-		bs = append(bs, b)
-	}
-	return string(bs)
-}
-
-func TestDeleteMeAfterDay23(t *testing.T) {
-	t.Fatal("Delete me and the Direction type after solving day 23")
-}
-
 func TestNew(t *testing.T) {
 	for _, s := range []string{
 		"",
