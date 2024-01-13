@@ -101,7 +101,6 @@ func solve(input string, part int) (string, error) {
 			if mirroredOverColumn(g, col, fixSmudge) {
 				// The column used for summation is 1-indexed, not 0-indexed.
 				sum += col + 1
-				break //remove?
 			}
 		}
 	}

@@ -62,7 +62,7 @@ func (t target) tmplArgs() tmplArgs {
 func (t target) ensurePackageDirectoryExists() error {
 	dir := t.packageDirectory()
 	glog.V(1).Infof("Ensuring package directory exists: %q", dir)
-	return os.MkdirAll(dir, fs.FileMode(0755))
+	return os.MkdirAll(dir, fs.FileMode(0o755))
 }
 
 func (t target) writePackageFile() error {
@@ -75,7 +75,7 @@ func (t target) writePackageFile() error {
 		return fmt.Errorf("format executed template: %v", err)
 	}
 	p := filepath.Join(t.packageDirectory(), fmt.Sprintf("day%02d.go", t.Day))
-	if err := os.WriteFile(p, formatted, fs.FileMode(0644)); err != nil {
+	if err := os.WriteFile(p, formatted, fs.FileMode(0o644)); err != nil {
 		return fmt.Errorf("write formatted source: %v", err)
 	}
 	glog.V(1).Infof("Wrote package file: %q", p)
@@ -92,7 +92,7 @@ func (t target) writeTestFile() error {
 		return fmt.Errorf("format executed template: %v", err)
 	}
 	p := filepath.Join(t.packageDirectory(), fmt.Sprintf("day%02d_test.go", t.Day))
-	if err := os.WriteFile(p, formatted, fs.FileMode(0644)); err != nil {
+	if err := os.WriteFile(p, formatted, fs.FileMode(0o644)); err != nil {
 		return fmt.Errorf("write formatted source: %v", err)
 	}
 	glog.V(1).Infof("Wrote test file: %q", p)
