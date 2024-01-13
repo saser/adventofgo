@@ -73,6 +73,9 @@ func getInput(ctx context.Context, c *http.Client, year int, day int) (string, e
 	if err != nil {
 		return "", fmt.Errorf("GET input page for year %d, day %d: read response body: %v", year, day, err)
 	}
+	if res.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("GET input page for year %d, day %d: HTTP GET request returned status %q and response body: %s", year, day, res.Status, string(body))
+	}
 	glog.V(1).Infof("Fetched %d bytes of input.", len(body))
 	return string(body), nil
 }
@@ -100,6 +103,13 @@ func getAnswers(ctx context.Context, c *http.Client, year int, day int) (part1 s
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return "", "", fmt.Errorf("GET problem page for year %d, day %d: read response body: %v", year, day, err)
+	}
+	if res.StatusCode != http.StatusOK {
+		return "", "", fmt.Errorf("GET problem page for year %d, day %d: HTTP GET request returned status %q and response body: %s", year, day, res.Status, string(body))
+	}
+	strBody := string(body)
+	if strings.Contains(strBody, "To play, please identify yourself via one of these services") {
+		return "", "", fmt.Errorf("GET problem page for year %d, day %d: problem page is for users not logged in; is the session cookie correct?", year, day)
 	}
 	matches := answerRE.FindAllStringSubmatch(string(body), 2)
 	if matches == nil {
