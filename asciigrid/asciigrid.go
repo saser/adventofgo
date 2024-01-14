@@ -20,6 +20,8 @@ import (
 //	.....
 type Direction int
 
+//go:generate go run golang.org/x/tools/cmd/stringer -type=Direction
+
 const (
 	// None is the lack of a direction. Taking a step in direction None leaves you in the same place.
 	None Direction = iota
