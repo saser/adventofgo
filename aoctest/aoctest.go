@@ -63,6 +63,7 @@ func Benchmark(b *testing.B, year int, day int, part int, fn SolveFunc) {
 	if got != want {
 		b.Fatalf("Part%d(<real input>) = %q; want %q", part, got, want)
 	}
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		bAnswer, bErr = fn(input)
 	}
