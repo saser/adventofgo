@@ -278,18 +278,12 @@ func (g *Grid) Pos(i Index) Pos {
 // Get returns the ASCII character at the given position in the grid. Get panics
 // if p is out of bounds.
 func (g *Grid) Get(p Pos) byte {
-	if !g.InBounds(p) {
-		panic(fmt.Errorf("asciigrid: Get(row = %d, col = %d) is out of bounds for grid with %d rows and %d cols", p.Row, p.Col, g.nRows, g.nCols))
-	}
 	return g.rows[p.Row][p.Col]
 }
 
 // Set stores the given ASCII character at the given position. Set panics if p
 // is out of bounds.
 func (g *Grid) Set(p Pos, b byte) {
-	if !g.InBounds(p) {
-		panic(fmt.Errorf("asciigrid: Get(row = %d, col = %d) is out of bounds for grid with %d rows and %d cols", p.Row, p.Col, g.nRows, g.nCols))
-	}
 	g.rows[p.Row][p.Col] = b
 }
 
