@@ -5,6 +5,7 @@ package asciigrid
 import (
 	"bytes"
 	"fmt"
+	"strconv"
 )
 
 // Direction represents the vertical, horizontal, and diagonal directions in the
@@ -74,6 +75,31 @@ const (
 	//	.....
 	BottomRight
 )
+
+func (d Direction) String() string {
+	switch d {
+	case None:
+		return "None"
+	case Up:
+		return "Up"
+	case Down:
+		return "Down"
+	case Left:
+		return "Left"
+	case Right:
+		return "Right"
+	case TopLeft:
+		return "TopLeft"
+	case TopRight:
+		return "TopRight"
+	case BottomLeft:
+		return "BottomLeft"
+	case BottomRight:
+		return "BottomRight"
+	default:
+		return "Direction(" + strconv.FormatInt(int64(d), 10) + ")"
+	}
+}
 
 // Inverse returns the inverse direction. It has the property that for a
 // position p and direction d:
