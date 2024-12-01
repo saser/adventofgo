@@ -1,6 +1,6 @@
 module go.saser.se/adventofgo
 
-go 1.21
+go 1.23.3
 
 require (
 	github.com/golang/glog v1.2.0
