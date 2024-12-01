@@ -10,11 +10,10 @@ import (
 	"fmt"
 	"go/format"
 	"io/fs"
+	"log"
 	"os"
 	"path/filepath"
 	"text/template"
-
-	"github.com/golang/glog"
 
 	// For embedding templates.
 	_ "embed"
@@ -61,7 +60,7 @@ func (t target) tmplArgs() tmplArgs {
 
 func (t target) ensurePackageDirectoryExists() error {
 	dir := t.packageDirectory()
-	glog.V(1).Infof("Ensuring package directory exists: %q", dir)
+	log.Printf("Ensuring package directory exists: %q", dir)
 	return os.MkdirAll(dir, fs.FileMode(0o755))
 }
 
@@ -78,7 +77,7 @@ func (t target) writePackageFile() error {
 	if err := os.WriteFile(p, formatted, fs.FileMode(0o644)); err != nil {
 		return fmt.Errorf("write formatted source: %v", err)
 	}
-	glog.V(1).Infof("Wrote package file: %q", p)
+	log.Printf("Wrote package file: %q", p)
 	return nil
 }
 
@@ -95,12 +94,12 @@ func (t target) writeTestFile() error {
 	if err := os.WriteFile(p, formatted, fs.FileMode(0o644)); err != nil {
 		return fmt.Errorf("write formatted source: %v", err)
 	}
-	glog.V(1).Infof("Wrote test file: %q", p)
+	log.Printf("Wrote test file: %q", p)
 	return nil
 }
 
 func (t target) WriteFiles() error {
-	glog.V(1).Info("Creating directories and writing files...")
+	log.Printf("Creating directories and writing files...")
 	if err := t.ensurePackageDirectoryExists(); err != nil {
 		return fmt.Errorf("ensure package directory exists: %v", err)
 	}
@@ -126,10 +125,10 @@ func errmain() error {
 		if err != nil {
 			return fmt.Errorf("default to current directory: %v", err)
 		}
-		glog.V(1).Infof("-dir was empty; falling back to current directory: %q.", d)
+		log.Printf("-dir was empty; falling back to current directory: %q.", d)
 		outputDir = d
 	} else {
-		glog.V(1).Infof("Files will be written to directory: %q", outputDir)
+		log.Printf("Files will be written to directory: %q", outputDir)
 	}
 
 	t := target{
@@ -147,6 +146,7 @@ func errmain() error {
 func main() {
 	flag.Parse()
 	if err := errmain(); err != nil {
-		glog.Exit(err)
+		log.Printf("Fatal error: %v", err)
+		os.Exit(1)
 	}
 }

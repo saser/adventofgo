@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"log"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
@@ -19,7 +20,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/golang/glog"
 	"golang.org/x/net/publicsuffix"
 )
 
@@ -50,7 +50,7 @@ func buildHTTPClient(session string) (*http.Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("create cookie jar: %w", err)
 	}
-	glog.V(1).Infof(`Setting "session" cookie to %q.`, session)
+	log.Printf(`Setting "session" cookie to %q.`, session)
 	jar.SetCookies(aocURL(), []*http.Cookie{{Name: "session", Value: session}})
 	return &http.Client{Jar: jar}, nil
 }
@@ -59,7 +59,7 @@ func buildHTTPClient(session string) (*http.Client, error) {
 func getInput(ctx context.Context, c *http.Client, year int, day int) (string, error) {
 	u := aocURL()
 	u.Path = path.Join(fmt.Sprint(year), "day", fmt.Sprint(day), "input")
-	glog.V(1).Infof("Fetching input from %q.", u.String())
+	log.Printf("Fetching input from %q.", u.String())
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 	if err != nil {
 		return "", fmt.Errorf("GET input page for year %d, day %d: build HTTP GET request: %v", year, day, err)
@@ -76,7 +76,7 @@ func getInput(ctx context.Context, c *http.Client, year int, day int) (string, e
 	if res.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("GET input page for year %d, day %d: HTTP GET request returned status %q and response body: %s", year, day, res.Status, string(body))
 	}
-	glog.V(1).Infof("Fetched %d bytes of input.", len(body))
+	log.Printf("Fetched %d bytes of input.", len(body))
 	return string(body), nil
 }
 
@@ -90,7 +90,7 @@ var answerRE = regexp.MustCompile(`Your puzzle answer was <code>(.+?)</code>`)
 func getAnswers(ctx context.Context, c *http.Client, year int, day int) (part1 string, part2 string, err error) {
 	u := aocURL()
 	u.Path = path.Join(fmt.Sprint(year), "day", fmt.Sprint(day))
-	glog.V(1).Infof("Parsing answers for year %d, day %d from %q.", year, day, u.String())
+	log.Printf("Parsing answers for year %d, day %d from %q.", year, day, u.String())
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 	if err != nil {
 		return "", "", fmt.Errorf("GET problem page for year %d, day %d: build HTTP GET request: %v", year, day, err)
@@ -113,7 +113,7 @@ func getAnswers(ctx context.Context, c *http.Client, year int, day int) (part1 s
 	}
 	matches := answerRE.FindAllStringSubmatch(string(body), 2)
 	if matches == nil {
-		glog.V(1).Infof("Found no answers for year %d, day %d.", year, day)
+		log.Printf("Found no answers for year %d, day %d.", year, day)
 		return "", "", nil
 	}
 	if len(matches) >= 1 {
@@ -137,21 +137,21 @@ type dataset struct {
 // directory. It ensures that all written files have a trailing newline.
 func writeDataset(ds dataset, dir string) error {
 	base := filepath.Join(dir, fmt.Sprintf("year%d_day%02d", ds.Year, ds.Day))
-	glog.V(1).Infof("Using %q as the base for filenames.", base)
+	log.Printf("Using %q as the base for filenames.", base)
 
 	ensureNewline := func(s string) string { return strings.TrimSpace(s) + "\n" }
 
 	inputPath := base + "_input"
-	glog.V(1).Infof("Writing input file to %q.", inputPath)
+	log.Printf("Writing input file to %q.", inputPath)
 	if err := os.WriteFile(inputPath, []byte(ensureNewline(ds.Input)), fs.FileMode(0o644)); err != nil {
 		return fmt.Errorf("write input file: %v", err)
 	}
 
 	part1Path := base + "_part1_output"
 	if ds.Part1 != "" {
-		glog.V(1).Infof("Writing part 1 answer (%q) to %q.", ds.Part1, part1Path)
+		log.Printf("Writing part 1 answer (%q) to %q.", ds.Part1, part1Path)
 	} else {
-		glog.V(1).Infof("Writing empty part 1 answer to %q.", part1Path)
+		log.Printf("Writing empty part 1 answer to %q.", part1Path)
 	}
 	if err := os.WriteFile(part1Path, []byte(ensureNewline(ds.Part1)), fs.FileMode(0o644)); err != nil {
 		return fmt.Errorf("write part 1 answer file: %v", err)
@@ -159,11 +159,11 @@ func writeDataset(ds dataset, dir string) error {
 
 	part2Path := base + "_part2_output"
 	if ds.Part2 != "" {
-		glog.V(1).Infof("Writing part 2 answer (%q) to %q.", ds.Part2, part2Path)
+		log.Printf("Writing part 2 answer (%q) to %q.", ds.Part2, part2Path)
 	} else {
-		glog.V(1).Infof("Writing empty part 2 answer to %q.", part2Path)
+		log.Printf("Writing empty part 2 answer to %q.", part2Path)
 	}
-	glog.V(1).Infof("Writing part 2 file to %q.", part2Path)
+	log.Printf("Writing part 2 file to %q.", part2Path)
 	if err := os.WriteFile(part2Path, []byte(ensureNewline(ds.Part2)), fs.FileMode(0o644)); err != nil {
 		return fmt.Errorf("write part 2 answer file: %v", err)
 	}
@@ -202,10 +202,10 @@ func errmain() error {
 		return fmt.Errorf("fetch answers: %v", err)
 	}
 	if part1 != "" {
-		glog.V(1).Infof("Answer to part 1 is %q.", part1)
+		log.Printf("Answer to part 1 is %q.", part1)
 	}
 	if part2 != "" {
-		glog.V(1).Infof("Answer to part 2 is %q.", part2)
+		log.Printf("Answer to part 2 is %q.", part2)
 	}
 
 	ds := dataset{
@@ -219,7 +219,7 @@ func errmain() error {
 		return fmt.Errorf("write dataset: %v", err)
 	}
 
-	glog.Infof("Wrote files for year %d, day %d.", *year, *day)
+	log.Printf("Wrote files for year %d, day %d.", *year, *day)
 
 	return nil
 }
@@ -227,6 +227,7 @@ func errmain() error {
 func main() {
 	flag.Parse()
 	if err := errmain(); err != nil {
-		glog.Exit(err)
+		log.Printf("Fatal error: %v", err)
+		os.Exit(1)
 	}
 }
