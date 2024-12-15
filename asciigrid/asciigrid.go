@@ -5,6 +5,7 @@ package asciigrid
 import (
 	"bytes"
 	"fmt"
+	"iter"
 	"strconv"
 )
 
@@ -324,6 +325,21 @@ func (g *Grid) InBounds(p Pos) bool {
 // represents.
 func (g *Grid) String() string {
 	return string(bytes.Join(g.rows, []byte{'\n'}))
+}
+
+// All iterates over all positions and the byte stored at them, in an undefined
+// order.
+func (g *Grid) All() iter.Seq2[Pos, byte] {
+	return func(yield func(Pos, byte) bool) {
+		for row := 0; row < g.NRows(); row++ {
+			for col := 0; col < g.NCols(); col++ {
+				p := Pos{Row: row, Col: col}
+				if !yield(p, g.Get(p)) {
+					return
+				}
+			}
+		}
+	}
 }
 
 // Iter represents an iterator over bytes in a string. It is intended to be very

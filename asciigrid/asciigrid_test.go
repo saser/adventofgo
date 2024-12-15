@@ -245,3 +245,26 @@ ghi
 		}
 	}
 }
+
+func TestGrid_All(t *testing.T) {
+	s := strings.TrimSpace(`
+abcde
+12345
+!@#$%
+`)
+	g := newT(t, s)
+	wantBytes := []byte("abcde12345!@#$%")
+	var gotBytes []byte
+	for p, b := range g.All() {
+		if !g.InBounds(p) {
+			t.Errorf("%v is not in bounds of grid:\n%v", p, g)
+		}
+		if got, want := g.Get(p), b; got != want {
+			t.Errorf("g.Get(%v) = %v; want %v; grid:\n%v", p, got, want, g)
+		}
+		gotBytes = append(gotBytes, b)
+	}
+	if diff := cmp.Diff(wantBytes, gotBytes, cmpopts.SortSlices(func(a, b byte) bool { return a < b })); diff != "" {
+		t.Errorf("Collecting all bytes gave an unexpected result (-want +got)\n%v", diff)
+	}
+}
