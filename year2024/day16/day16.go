@@ -102,7 +102,7 @@ func solve(input string, part int) (string, error) {
 	pq.Push(state{
 		key: key{
 			Pos: start,
-			Dir: asciigrid.Left,
+			Dir: asciigrid.Right,
 		},
 		Cost: 0,
 		Map:  renderMap(g.String(), start, asciigrid.Left),
@@ -113,6 +113,7 @@ func solve(input string, part int) (string, error) {
 			continue
 		}
 		if s.key.Pos == end {
+			fmt.Println(s.Map)
 			return fmt.Sprint(s.Cost), nil
 		}
 		seen[s.key] = s
