@@ -272,6 +272,18 @@ func MustNew(s string) *Grid {
 	return g
 }
 
+func (g *Grid) Clone() *Grid {
+	g2 := &Grid{
+		rows:  make([][]byte, g.nRows),
+		nRows: g.nRows,
+		nCols: g.nCols,
+	}
+	for i, row := range g.rows {
+		g2.rows[i] = bytes.Clone(row)
+	}
+	return g2
+}
+
 // NRows is the number of rows in the grid.
 func (g *Grid) NRows() int {
 	return g.nRows

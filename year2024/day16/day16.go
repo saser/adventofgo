@@ -50,6 +50,17 @@ func printMap(g *asciigrid.Grid, pos asciigrid.Pos, dir asciigrid.Direction) {
 	fmt.Println()
 }
 
+func renderMap(current string, pos asciigrid.Pos, dir asciigrid.Direction) string {
+	g := asciigrid.MustNew(current)
+	g.Set(pos, map[asciigrid.Direction]byte{
+		asciigrid.Up:    '^',
+		asciigrid.Right: '>',
+		asciigrid.Down:  'v',
+		asciigrid.Left:  '<',
+	}[dir])
+	return g.String()
+}
+
 func solve(input string, part int) (string, error) {
 	if part == 2 {
 		return "", errors.New("unimplemented")
@@ -84,6 +95,7 @@ func solve(input string, part int) (string, error) {
 	type state struct {
 		key
 		Cost int
+		Map  string
 	}
 	seen := make(map[key]state)
 	pq := priorityqueue.NewFunc(func(x, y state) bool { return x.Cost < y.Cost })
@@ -93,13 +105,13 @@ func solve(input string, part int) (string, error) {
 			Dir: asciigrid.Left,
 		},
 		Cost: 0,
+		Map:  renderMap(g.String(), start, asciigrid.Left),
 	})
 	for pq.Len() > 0 {
 		s := pq.Pop()
 		if _, ok := seen[s.key]; ok {
 			continue
 		}
-		printMap(g, s.key.Pos, s.key.Dir)
 		if s.key.Pos == end {
 			return fmt.Sprint(s.Cost), nil
 		}
@@ -110,6 +122,7 @@ func solve(input string, part int) (string, error) {
 				Dir: turnCW(s.key.Dir),
 			},
 			Cost: s.Cost + 1000,
+			Map:  renderMap(s.Map, s.key.Pos, turnCW(s.key.Dir)),
 		})
 		pq.Push(state{
 			key: key{
@@ -117,6 +130,7 @@ func solve(input string, part int) (string, error) {
 				Dir: turnCCW(s.key.Dir),
 			},
 			Cost: s.Cost + 1000,
+			Map:  renderMap(s.Map, s.key.Pos, turnCCW(s.key.Dir)),
 		})
 		// Assumption: next is within bounds due to the surrounding walls.
 		if next := s.key.Pos.Step(s.key.Dir); g.Get(next) != '#' {
@@ -126,6 +140,7 @@ func solve(input string, part int) (string, error) {
 					Dir: s.key.Dir,
 				},
 				Cost: s.Cost + 1,
+				Map:  renderMap(s.Map, next, s.key.Dir),
 			})
 		}
 	}
