@@ -1,8 +1,9 @@
 package day16
 
 import (
-	"errors"
 	"fmt"
+	"log"
+	"slices"
 
 	"go.saser.se/adventofgo/asciigrid"
 	"go.saser.se/adventofgo/container/priorityqueue"
@@ -38,33 +39,7 @@ func turnCCW(dir asciigrid.Direction) asciigrid.Direction {
 	}
 }
 
-func printMap(g *asciigrid.Grid, pos asciigrid.Pos, dir asciigrid.Direction) {
-	defer g.Set(pos, g.Get(pos))
-	g.Set(pos, map[asciigrid.Direction]byte{
-		asciigrid.Up:    '^',
-		asciigrid.Right: '>',
-		asciigrid.Down:  'v',
-		asciigrid.Left:  '<',
-	}[dir])
-	fmt.Println(g)
-	fmt.Println()
-}
-
-func renderMap(current string, pos asciigrid.Pos, dir asciigrid.Direction) string {
-	g := asciigrid.MustNew(current)
-	g.Set(pos, map[asciigrid.Direction]byte{
-		asciigrid.Up:    '^',
-		asciigrid.Right: '>',
-		asciigrid.Down:  'v',
-		asciigrid.Left:  '<',
-	}[dir])
-	return g.String()
-}
-
 func solve(input string, part int) (string, error) {
-	if part == 2 {
-		return "", errors.New("unimplemented")
-	}
 	g, err := asciigrid.New(input)
 	if err != nil {
 		return "", fmt.Errorf("parse input as grid: %v", err)
@@ -94,8 +69,8 @@ func solve(input string, part int) (string, error) {
 	}
 	type state struct {
 		key
-		Cost int
-		Map  string
+		Cost  int
+		Tiles []asciigrid.Pos
 	}
 	seen := make(map[key]state)
 	pq := priorityqueue.NewFunc(func(x, y state) bool { return x.Cost < y.Cost })
@@ -104,17 +79,31 @@ func solve(input string, part int) (string, error) {
 			Pos: start,
 			Dir: asciigrid.Right,
 		},
-		Cost: 0,
-		Map:  renderMap(g.String(), start, asciigrid.Left),
+		Cost:  0,
+		Tiles: []asciigrid.Pos{start},
 	})
+	lowestScore := -1
+	bestTiles := make(map[asciigrid.Pos]struct{})
 	for pq.Len() > 0 {
 		s := pq.Pop()
-		if _, ok := seen[s.key]; ok {
+		if prev, ok := seen[s.key]; ok && s.Cost > prev.Cost {
 			continue
 		}
 		if s.key.Pos == end {
-			fmt.Println(s.Map)
-			return fmt.Sprint(s.Cost), nil
+			if part == 1 {
+				return fmt.Sprint(s.Cost), nil
+			}
+			if lowestScore == -1 {
+				lowestScore = s.Cost
+			}
+			if s.Cost == lowestScore {
+				log.Printf("found new solution with cost %d", s.Cost)
+				for _, tile := range s.Tiles {
+					bestTiles[tile] = struct{}{}
+				}
+				log.Printf("len(bestTiles): %#+v\n", len(bestTiles))
+				continue
+			}
 		}
 		seen[s.key] = s
 		pq.Push(state{
@@ -122,16 +111,16 @@ func solve(input string, part int) (string, error) {
 				Pos: s.key.Pos,
 				Dir: turnCW(s.key.Dir),
 			},
-			Cost: s.Cost + 1000,
-			Map:  renderMap(s.Map, s.key.Pos, turnCW(s.key.Dir)),
+			Cost:  s.Cost + 1000,
+			Tiles: slices.Clone(s.Tiles),
 		})
 		pq.Push(state{
 			key: key{
 				Pos: s.key.Pos,
 				Dir: turnCCW(s.key.Dir),
 			},
-			Cost: s.Cost + 1000,
-			Map:  renderMap(s.Map, s.key.Pos, turnCCW(s.key.Dir)),
+			Cost:  s.Cost + 1000,
+			Tiles: slices.Clone(s.Tiles),
 		})
 		// Assumption: next is within bounds due to the surrounding walls.
 		if next := s.key.Pos.Step(s.key.Dir); g.Get(next) != '#' {
@@ -140,12 +129,12 @@ func solve(input string, part int) (string, error) {
 					Pos: next,
 					Dir: s.key.Dir,
 				},
-				Cost: s.Cost + 1,
-				Map:  renderMap(s.Map, next, s.key.Dir),
+				Cost:  s.Cost + 1,
+				Tiles: append(slices.Clone(s.Tiles), next),
 			})
 		}
 	}
-	return "", errors.New("no solution found")
+	return fmt.Sprint(len(bestTiles)), nil
 }
 
 func Part1(input string) (string, error) {
