@@ -3,6 +3,7 @@ package day22
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"go.saser.se/adventofgo/striter"
 )
@@ -100,46 +101,46 @@ func Part2(input string) (string, error) {
 	// The first time the sequence is seen, the amount of bananas won is 6. So
 	// if the first buyer starts with 123, then wonByBuyer[0][4294901762] = 6.
 	//
-	// The overall idea is to first build up the wonByBuyer data structure as
-	// well as the set of all seen signatures. Then, go through all the seen
-	// signatures, calculate the profit for each signature, and pick the best
-	// profit.
-	var wonByBuyer []map[uint32]uint8
-	allSignatures := make(map[uint32]struct{})
-	lines := striter.OverLines(input)
-	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
+	// The overall idea is to gradually build up the full profit of each
+	// signature, by adding to the entries in this map every time a signature is
+	// seen. When all buyers have been processed, we can go over this map and
+	// pick out the biggest profit.
+	//
+	// The reason for collecting all the lines first, rather than iterating over
+	// them one by one, is that we can then preallocate all the required memory
+	// for the `profits` map. Benchmarking shows that this uses more memory but
+	// also runs about 2x as fast, which seems like a good tradeoff.
+	lines := strings.Split(strings.TrimSpace(input), "\n")
+	profits := make(map[uint32]uint64, len(lines)*2000)
+	for _, line := range lines {
 		n0, err := strconv.ParseUint(line, 10, 64)
 		if err != nil {
 			return "", err
 		}
-		bananas := make(map[uint32]uint8)
+		// We need to keep track of which signatures we've seen, so that we only
+		// record the profit the first time a signature is seen.
+		seen := make(map[uint32]struct{}, 2000)
 		// Get the first 5 numbers so we can build up the first signature.
 		n1 := evolve(n0)
 		n2 := evolve(n1)
 		n3 := evolve(n2)
 		n4 := evolve(n3)
 		sig := signature(n0, n1, n2, n3, n4)
-		allSignatures[sig] = struct{}{}
-		bananas[sig] = uint8(n4 % 10)
+		profits[sig] += n4 % 10
+		seen[sig] = struct{}{}
 		// Then go through the remaining numbers and find all the signatures.
-		// Only store the amount of bananas the first time we see a signature.
 		for range 2000 - 4 {
 			n3, n4 = n4, evolve(n4)
 			sig = nextSignature(sig, n3, n4)
-			allSignatures[sig] = struct{}{}
-			if _, seen := bananas[sig]; !seen {
-				bananas[sig] = uint8(n4 % 10)
+			if _, ok := seen[sig]; !ok {
+				seen[sig] = struct{}{}
+				profits[sig] += n4 % 10
 			}
 		}
-		wonByBuyer = append(wonByBuyer, bananas)
 	}
 	var best uint64 = 0
-	for sig := range allSignatures {
-		var sum uint64 = 0
-		for _, won := range wonByBuyer {
-			sum += uint64(won[sig])
-		}
-		best = max(best, sum)
+	for _, profit := range profits {
+		best = max(best, profit)
 	}
 	return fmt.Sprint(best), nil
 }
