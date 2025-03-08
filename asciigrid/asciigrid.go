@@ -25,7 +25,9 @@ type Direction int
 //go:generate go run golang.org/x/tools/cmd/stringer -type=Direction
 
 const (
-	// None is the lack of a direction. Taking a step in direction None leaves you in the same place.
+	// None is the lack of a direction. Taking a step in direction None leaves
+	// you in the same place. Turning any number of steps also leaves you in the
+	// direction None.
 	None Direction = iota
 	//	.....
 	//	..O..
@@ -107,28 +109,94 @@ func (d Direction) String() string {
 //
 //	p.Step(d).Step(d.Inverse()) == p
 func (d Direction) Inverse() Direction {
-	switch d {
-	case None:
-		return None
-	case Up:
-		return Down
-	case Down:
-		return Up
-	case Left:
-		return Right
-	case Right:
-		return Left
-	case TopLeft:
-		return BottomRight
-	case TopRight:
-		return BottomLeft
-	case BottomLeft:
-		return TopRight
-	case BottomRight:
-		return TopLeft
-	default:
-		panic(fmt.Errorf("invalid direction %d", d))
+	return d.Turn(TurnAround)
+}
+
+const (
+	TurnClockwise45        = +1
+	TurnClockwise90        = 2 * TurnClockwise45
+	TurnCounterClockwise45 = -1
+	TurnCounterClockwise90 = 2 * TurnCounterClockwise45
+	TurnAround             = 2 * TurnClockwise90
+)
+
+// Turn rotates in 45-degree steps a total of n times. If n is positive, the
+// turning direction is clockwise; if n is negative, the turning direction is
+// counter-clockwise. There are convenience constants such as [TurnClockwise90]
+// to help ensure the input to this function makes sense.
+func (d Direction) Turn(n int) Direction {
+	if n > 0 {
+		return d.turnCW(n)
 	}
+	if n < 0 {
+		return d.turnCCW(-n)
+	}
+	return d
+}
+
+// turnCW turns in 45-degree steps clockwise n times. n must be non-negative.
+func (d Direction) turnCW(n int) Direction {
+	if d == None {
+		return None
+	}
+	n %= 8
+	for n > 0 {
+		var next Direction
+		switch d {
+		case Up:
+			next = TopRight
+		case TopRight:
+			next = Right
+		case Right:
+			next = BottomRight
+		case BottomRight:
+			next = Down
+		case Down:
+			next = BottomLeft
+		case BottomLeft:
+			next = Left
+		case Left:
+			next = TopLeft
+		case TopLeft:
+			next = Up
+		}
+		d = next
+		n--
+	}
+	return d
+}
+
+// turnCCW turns in 45-degree steps counter-clockwise n times. n must be
+// non-negative.
+func (d Direction) turnCCW(n int) Direction {
+	if d == None {
+		return None
+	}
+	n %= 8
+	for n > 0 {
+		var next Direction
+		switch d {
+		case Up:
+			next = TopLeft
+		case TopLeft:
+			next = Left
+		case Left:
+			next = BottomLeft
+		case BottomLeft:
+			next = Down
+		case Down:
+			next = BottomRight
+		case BottomRight:
+			next = Right
+		case Right:
+			next = TopRight
+		case TopRight:
+			next = Up
+		}
+		d = next
+		n--
+	}
+	return d
 }
 
 // Pos represents a position in the grid. Rows and columns are 0-indexed. Rows
