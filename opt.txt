@@ -1,0 +1,26 @@
+goos: linux
+goarch: amd64
+pkg: go.saser.se/adventofgo/year2024/day03
+cpu: AMD Ryzen 9 5900HX with Radeon Graphics        
+BenchmarkPart1-16    	   18555	     63197 ns/op	      24 B/op	       2 allocs/op
+BenchmarkPart1-16    	   19084	     62357 ns/op	      24 B/op	       2 allocs/op
+BenchmarkPart1-16    	   19056	     62454 ns/op	      24 B/op	       2 allocs/op
+BenchmarkPart1-16    	   19251	     62469 ns/op	      24 B/op	       2 allocs/op
+BenchmarkPart1-16    	   19213	     62308 ns/op	      24 B/op	       2 allocs/op
+BenchmarkPart1-16    	   19232	     62470 ns/op	      24 B/op	       2 allocs/op
+BenchmarkPart1-16    	   19218	     62434 ns/op	      24 B/op	       2 allocs/op
+BenchmarkPart1-16    	   19308	     63795 ns/op	      24 B/op	       2 allocs/op
+BenchmarkPart1-16    	   19399	     62125 ns/op	      24 B/op	       2 allocs/op
+BenchmarkPart1-16    	   19060	     62583 ns/op	      24 B/op	       2 allocs/op
+BenchmarkPart2-16    	   19202	     62309 ns/op	      16 B/op	       2 allocs/op
+BenchmarkPart2-16    	   19227	     62300 ns/op	      16 B/op	       2 allocs/op
+BenchmarkPart2-16    	   19216	     62483 ns/op	      16 B/op	       2 allocs/op
+BenchmarkPart2-16    	   19040	     62576 ns/op	      16 B/op	       2 allocs/op
+BenchmarkPart2-16    	   19173	     62369 ns/op	      16 B/op	       2 allocs/op
+BenchmarkPart2-16    	   19292	     62258 ns/op	      16 B/op	       2 allocs/op
+BenchmarkPart2-16    	   19220	     62262 ns/op	      16 B/op	       2 allocs/op
+BenchmarkPart2-16    	   19278	     62642 ns/op	      16 B/op	       2 allocs/op
+BenchmarkPart2-16    	   19033	     62399 ns/op	      16 B/op	       2 allocs/op
+BenchmarkPart2-16    	   19309	     62089 ns/op	      16 B/op	       2 allocs/op
+PASS
+ok  	go.saser.se/adventofgo/year2024/day03	36.680s
