@@ -37,7 +37,41 @@ func (p *parser) number() (int, bool) {
 	return n, digits > 0
 }
 
-func (p *parser) sum(part int) int {
+func (p *parser) sum1() int {
+	sum := 0
+	for p.pos < len(p.input) {
+		if p.input[p.pos] != 'm' {
+			p.pos++
+			continue
+		}
+		if !p.literal("mul(") {
+			p.pos++
+			continue
+		}
+		a, ok := p.number()
+		if !ok {
+			p.pos++
+			continue
+		}
+		if !p.literal(",") {
+			p.pos++
+			continue
+		}
+		b, ok := p.number()
+		if !ok {
+			p.pos++
+			continue
+		}
+		if !p.literal(")") {
+			p.pos++
+			continue
+		}
+		sum += a * b
+	}
+	return sum
+}
+
+func (p *parser) sum2() int {
 	sum := 0
 	enabled := true
 	for p.pos < len(p.input) {
@@ -75,7 +109,7 @@ func (p *parser) sum(part int) int {
 			p.pos++
 			continue
 		}
-		if part == 1 || enabled {
+		if enabled {
 			sum += a * b
 		}
 	}
@@ -85,7 +119,14 @@ func (p *parser) sum(part int) int {
 func solve(input string, part int) (string, error) {
 	// input = `xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))`
 	// input = `xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))`
-	return fmt.Sprint((&parser{input: input}).sum(part)), nil
+	p := &parser{input: input}
+	var sum int
+	if part == 1 {
+		sum = p.sum1()
+	} else {
+		sum = p.sum2()
+	}
+	return fmt.Sprint(sum), nil
 	// matches := instructionRE.FindAllStringSubmatch(input, -1)
 	// sum := 0
 	// enabled := true
