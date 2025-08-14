@@ -41,6 +41,10 @@ func (p *parser) sum(part int) int {
 	sum := 0
 	enabled := true
 	for p.pos < len(p.input) {
+		if c := p.input[p.pos]; c != 'd' && c != 'm' {
+			p.pos++
+			continue
+		}
 		if p.literal("do()") {
 			enabled = true
 			continue
