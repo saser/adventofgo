@@ -2,12 +2,54 @@ package day02
 
 import (
 	"fmt"
+	"iter"
 	"slices"
-	"strconv"
-	"strings"
-
-	"go.saser.se/adventofgo/striter"
 )
+
+func parse(input string) iter.Seq[[]int] {
+	// We can make assumptions to efficiently parse a line:
+	// 1. Each line looks like "x y z ..." where x, y, z are base 10 integers
+	//    with no signs, separators, etc.
+	// 2. Estimate how many integers each line contains, and allocating memory
+	//    up front for them.
+	// In my input, the frequency of report lengths looked like this:
+	//     length   frequency
+	//     8        250
+	//     7        264
+	//     6        238
+	//     5        248
+	// So we simply allocate space for 8 elements and hope that no line contains
+	// more integers, so that we never have to grow the slice.
+	//
+	// Furthermore, to avoid allocating a new slice for every report, we use an
+	// iterator and have it retain ownership over the memory backing the slice
+	// that is yielded to the caller. This allows us to only ever need to
+	// allocate once for all reports. If a caller wants to retain access to a
+	// given report, they will have to clone the yielded slice.
+	return func(yield func([]int) bool) {
+		n := 0
+		report := make([]int, 0, 8)
+		for _, r := range input {
+			if r == '\n' {
+				report = append(report, n)
+				n = 0
+				if !yield(report) {
+					return
+				}
+				report = report[:0]
+				continue
+			}
+			if r == ' ' {
+				report = append(report, n)
+				n = 0
+				continue
+			}
+			n = n*10 + int(r-'0')
+		}
+		report = append(report, n)
+		yield(report)
+	}
+}
 
 func isSafeIncreasing(report []int) bool {
 	for i := range len(report) - 1 {
@@ -67,26 +109,11 @@ func isSafeIncreasingWithSkip(report []int) bool {
 		if i == len(report)-2 {
 			// The slice looks like this:
 			//     [..., x, y]
-			// First try skipping x.
-			//     initial state: [..., x, y]
-			//     swap x and y:  [..., y, x]
-			report[i], report[i+1] = report[i+1], report[i]
-			//     check [:n-2]:  [..., y]
-			ok := isSafeIncreasing(report[:n-2])
-			//     swap x and y:  [..., x, y]
-			report[i], report[i+1] = report[i+1], report[i]
-			if ok {
-				return true
-			}
-			// If that doesn't work, try skipping y:
-			//     initial state: [..., x, y]
-			//     check [:n-2]:  [..., x]
-			ok = isSafeIncreasing(report[:n-2])
-			if ok {
-				return true
-			}
-			// Neither skipping x or y helped; this report is not safe.
-			return false
+			// We iterate from left to right and therefore know that this is
+			// safe:
+			//     [..., x]
+			// So, we can just skip y.
+			return true
 		}
 		// The slice looks like this:
 		//     [..., w, x, y, z, ...]
@@ -126,18 +153,8 @@ func isSafeIncreasingWithSkip(report []int) bool {
 }
 
 func solve(input string, part int) (string, error) {
-	lines := striter.OverLines(input)
 	count := 0
-	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
-		fields := strings.Fields(line)
-		report := make([]int, len(fields))
-		for i, f := range fields {
-			var err error
-			report[i], err = strconv.Atoi(f)
-			if err != nil {
-				return "", fmt.Errorf("parse integer from line %q: %w", line, err)
-			}
-		}
+	for report := range parse(input) {
 		var isSafe func(report []int) bool
 		if part == 1 {
 			isSafe = isSafeIncreasing
