@@ -4,8 +4,6 @@ import (
 	"container/list"
 	"fmt"
 	"strings"
-
-	"go.saser.se/adventofgo/striter"
 )
 
 func Part1(input string) (string, error) {
@@ -42,9 +40,8 @@ func hash(s string) int {
 
 func Part2(input string) (string, error) {
 	boxes := make([]*list.List, 256)
-	steps := striter.OverSplit(input, ",")
 stepLoop:
-	for step, ok := steps.Next(); ok; step, ok = steps.Next() {
+	for step := range strings.SplitSeq(input, ",") {
 		opIndex := strings.IndexAny(step, "-=")
 		label := step[:opIndex]
 		op := step[opIndex]

@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 
 	"go.saser.se/adventofgo/asciigrid"
-	"go.saser.se/adventofgo/striter"
 )
 
 type pinHeight [5]int
@@ -25,9 +25,8 @@ func solve(input string, part int) (string, error) {
 	if part == 2 {
 		return "", errors.New("unimplemented")
 	}
-	fragments := striter.OverSplit(input, "\n\n")
 	var locks, keys []pinHeight
-	for fragment, ok := fragments.Next(); ok; fragment, ok = fragments.Next() {
+	for fragment := range strings.SplitSeq(input, "\n\n") {
 		g, err := asciigrid.New(fragment)
 		if err != nil {
 			return "", fmt.Errorf("parse fragment as grid: %v", err)
@@ -69,10 +68,10 @@ func solve(input string, part int) (string, error) {
 	answer := 0
 	// Not sure why, but sorting the `keys` slice first actually improves the
 	// runtime by ~25%! From ~500us to ~380us on my laptop. I don't know why,
-	// but I suspect it has to do with cache locality and stuff to do. Since the
-	// slice is sorted, there will be large "classes" of keys that will be
-	// skipped at once due to sharing similar "prefixes". This is handwave-y but
-	// I don't have the energy to think more about it right now.
+	// but I suspect it has to do with cache locality and stuff. Since the slice
+	// is sorted, there will be large "classes" of keys that will be skipped at
+	// once due to sharing similar "prefixes". This is handwave-y but I don't
+	// have the energy to think more about it right now.
 	slices.SortFunc(keys, func(a, b pinHeight) int {
 		return cmp.Or(
 			cmp.Compare(a[0], b[0]),

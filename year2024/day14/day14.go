@@ -6,8 +6,6 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
-
-	"go.saser.se/adventofgo/striter"
 )
 
 const (
@@ -57,9 +55,8 @@ func (r robot) Step(n int) robot {
 }
 
 func Part1(input string) (string, error) {
-	lines := striter.OverLines(input)
 	var upperLeft, upperRight, lowerLeft, lowerRight int
-	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
+	for line := range strings.SplitSeq(input, "\n") {
 		r, err := parse(line)
 		if err != nil {
 			return "", fmt.Errorf("parse line: %v", err)
@@ -127,9 +124,8 @@ func hasChristmasTree(robots []robot) bool {
 }
 
 func Part2(input string) (string, error) {
-	lines := striter.OverLines(input)
 	var robots []robot
-	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
+	for line := range strings.SplitSeq(input, "\n") {
 		r, err := parse(line)
 		if err != nil {
 			return "", fmt.Errorf("parse line: %v", err)

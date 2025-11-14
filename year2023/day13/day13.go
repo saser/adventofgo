@@ -2,16 +2,14 @@ package day13
 
 import (
 	"fmt"
-
-	"go.saser.se/adventofgo/striter"
+	"strings"
 )
 
 type pattern [][]bool
 
 func parsePattern(fragment string) pattern {
 	var g pattern
-	lines := striter.OverLines(fragment)
-	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
+	for line := range strings.SplitSeq(fragment, "\n") {
 		row := make([]bool, len(line))
 		for i, c := range line {
 			row[i] = c == '#'
@@ -23,8 +21,7 @@ func parsePattern(fragment string) pattern {
 
 func parse(input string) []pattern {
 	var ps []pattern
-	fragments := striter.OverSplit(input, "\n\n")
-	for fragment, ok := fragments.Next(); ok; fragment, ok = fragments.Next() {
+	for fragment := range strings.SplitSeq(input, "\n\n") {
 		ps = append(ps, parsePattern(fragment))
 	}
 	return ps

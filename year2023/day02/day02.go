@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-
-	"go.saser.se/adventofgo/striter"
 )
 
 type grab struct {
@@ -53,11 +51,9 @@ func parseLine(line string) (game, error) {
 		return game{}, fmt.Errorf("invalid line %q: parse ID from %q: %v", line, idString, err)
 	}
 
-	grabStrings := striter.OverSplit(rest, "; ")
-	for grabString, ok := grabStrings.Next(); ok; grabString, ok = grabStrings.Next() {
+	for grabString := range strings.SplitSeq(rest, "; ") {
 		var gr grab
-		chunks := striter.OverSplit(grabString, ", ")
-		for chunk, ok := chunks.Next(); ok; chunk, ok = chunks.Next() {
+		for chunk := range strings.SplitSeq(grabString, ", ") {
 			nString, color, ok := strings.Cut(chunk, " ")
 			if !ok {
 				return game{}, fmt.Errorf(`invalid line %q: parse grab %q: invalid chunk %q`, line, grabString, chunk)
@@ -83,8 +79,7 @@ func parseLine(line string) (game, error) {
 
 func Part1(input string) (string, error) {
 	sum := 0
-	lines := striter.OverLines(input)
-	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
+	for line := range strings.SplitSeq(input, "\n") {
 		g, err := parseLine(line)
 		if err != nil {
 			return "", err
@@ -98,8 +93,7 @@ func Part1(input string) (string, error) {
 
 func Part2(input string) (string, error) {
 	sum := 0
-	lines := striter.OverLines(input)
-	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
+	for line := range strings.SplitSeq(input, "\n") {
 		g, err := parseLine(line)
 		if err != nil {
 			return "", err

@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-
-	"go.saser.se/adventofgo/striter"
 )
 
 type expression interface {
@@ -129,9 +127,8 @@ func (c *circuit) Evaluate(wire string) (value uint16) {
 }
 
 func solve(input string, part int) (string, error) {
-	lines := striter.OverLines(input)
 	wires := make(map[string]expression)
-	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
+	for line := range strings.SplitSeq(input, "\n") {
 		exprString, wire, found := strings.Cut(line, " -> ")
 		if !found {
 			return "", fmt.Errorf(`invalid input line %q: doesn't have form "<expr> -> <wire>"`, line)

@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"go.saser.se/adventofgo/asciigrid"
-	"go.saser.se/adventofgo/striter"
 )
 
 type instruction struct {
@@ -264,9 +263,8 @@ func trenchArea(loop []asciigrid.Pos, clockwise bool) int64 {
 
 func solve(input string, part int) (string, error) {
 	swapped := part == 2
-	lines := striter.OverLines(input)
 	var instructions []*instruction
-	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
+	for line := range strings.SplitSeq(input, "\n") {
 		i, err := parseInstruction(line, swapped)
 		if err != nil {
 			return "", err

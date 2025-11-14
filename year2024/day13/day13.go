@@ -5,8 +5,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-
-	"go.saser.se/adventofgo/striter"
 )
 
 var (
@@ -93,8 +91,7 @@ func solveGame(g game) (a, b int64, ok bool) {
 
 func parse(input string) ([]game, error) {
 	var games []game
-	fragments := striter.OverSplit(input, "\n\n")
-	for fragment, ok := fragments.Next(); ok; fragment, ok = fragments.Next() {
+	for fragment := range strings.SplitSeq(input, "\n\n") {
 		g, err := parseGame(fragment)
 		if err != nil {
 			return nil, fmt.Errorf("parse game: %v", err)

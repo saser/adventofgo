@@ -3,8 +3,6 @@ package day19
 import (
 	"fmt"
 	"strings"
-
-	"go.saser.se/adventofgo/striter"
 )
 
 // arrangementCount returns the number of possible arrangements for the given
@@ -45,7 +43,6 @@ func isPossible(towel string, patterns []string, memo map[string]uint64) (n uint
 }
 
 func solve(input string, part int) (string, error) {
-	lines := striter.OverLines(input)
 	i := 0
 	var patterns []string
 	memo := make(map[string]uint64)
@@ -54,7 +51,7 @@ func solve(input string, part int) (string, error) {
 	if part == 2 {
 		countFn = arrangementCount
 	}
-	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
+	for line := range strings.SplitSeq(input, "\n") {
 		switch i {
 		case 0:
 			patterns = strings.Split(line, ", ")

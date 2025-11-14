@@ -3,8 +3,6 @@ package day05
 import (
 	"fmt"
 	"strings"
-
-	"go.saser.se/adventofgo/striter"
 )
 
 type checker interface {
@@ -80,8 +78,7 @@ func (part2) Check(password string) bool {
 func solve(input string, part int) (string, error) {
 	c := []checker{part1{}, part2{}}[part-1]
 	count := 0
-	lines := striter.OverLines(input)
-	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
+	for line := range strings.SplitSeq(input, "\n") {
 		if c.Check(line) {
 			count++
 		}

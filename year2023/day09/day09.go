@@ -4,16 +4,14 @@ import (
 	"fmt"
 	"slices"
 	"strconv"
-
-	"go.saser.se/adventofgo/striter"
+	"strings"
 )
 
 type report []int
 
 func parseReport(line string) (report, error) {
 	var r report
-	splits := striter.OverSplit(line, " ")
-	for s, ok := splits.Next(); ok; s, ok = splits.Next() {
+	for s := range strings.SplitSeq(line, " ") {
 		i, err := strconv.Atoi(s)
 		if err != nil {
 			return nil, fmt.Errorf("parse report from %q: parse number %q: %v", line, s, err)
@@ -44,8 +42,7 @@ func nextValue(r report) int {
 
 func parse(input string) ([]report, error) {
 	var rs []report
-	lines := striter.OverLines(input)
-	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
+	for line := range strings.SplitSeq(input, "\n") {
 		r, err := parseReport(line)
 		if err != nil {
 			return nil, err
