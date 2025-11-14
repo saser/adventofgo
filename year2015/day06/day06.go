@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"go.saser.se/adventofgo/geometry"
-	"go.saser.se/adventofgo/striter"
 )
 
 type op int
@@ -122,9 +122,8 @@ func max(a, b int) int {
 }
 
 func solve(input string, part int) (string, error) {
-	lines := striter.OverLines(input)
 	l := []lights{&binaryLights{}, &numericLights{}}[part-1]
-	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
+	for line := range strings.SplitSeq(input, "\n") {
 		in, err := parse(line)
 		if err != nil {
 			return "", err

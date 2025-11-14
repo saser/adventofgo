@@ -5,14 +5,11 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-
-	"go.saser.se/adventofgo/striter"
 )
 
 func solve(input string, part int) (string, error) {
-	lines := striter.OverLines(input)
 	answer := 0
-	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
+	for line := range strings.SplitSeq(input, "\n") {
 		pattern, groupsStr, _ := strings.Cut(line, " ")
 		var groups []int
 		for _, s := range strings.Split(groupsStr, ",") {

@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-
-	"go.saser.se/adventofgo/striter"
 )
 
 // evolve returns the next number from n.
@@ -38,9 +36,8 @@ func evolve(n uint64) uint64 {
 }
 
 func Part1(input string) (string, error) {
-	lines := striter.OverLines(input)
 	var sum uint64 = 0
-	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
+	for line := range strings.SplitSeq(input, "\n") {
 		n, err := strconv.ParseUint(line, 10, 64)
 		if err != nil {
 			return "", err

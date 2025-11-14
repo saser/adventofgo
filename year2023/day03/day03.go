@@ -2,9 +2,9 @@ package day03
 
 import (
 	"fmt"
+	"strings"
 
 	"go.saser.se/adventofgo/geometry"
-	"go.saser.se/adventofgo/striter"
 )
 
 type number struct {
@@ -65,9 +65,8 @@ func parse(input string) schematic {
 		Numbers: make(map[geometry.Pos2]number),
 		Symbols: make(map[geometry.Pos2]symbol),
 	}
-	lines := striter.OverLines(input)
 	row := 0
-	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
+	for line := range strings.SplitSeq(input, "\n") {
 		col := 0
 		for col < len(line) {
 			c := line[col]

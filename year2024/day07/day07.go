@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-
-	"go.saser.se/adventofgo/striter"
 )
 
 func parse(line string) (target int, parts []int, err error) {
@@ -82,9 +80,8 @@ func solve(input string, part int) (string, error) {
 	if part == 2 {
 		operators = append(operators, "||")
 	}
-	lines := striter.OverLines(input)
 	sum := 0
-	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
+	for line := range strings.SplitSeq(input, "\n") {
 		target, parts, err := parse(line)
 		if err != nil {
 			return "", err

@@ -7,13 +7,11 @@ import (
 	"strings"
 
 	"go.saser.se/adventofgo/container/set"
-	"go.saser.se/adventofgo/striter"
 )
 
 func parse(input string) (map[string]*set.Set[string], error) {
-	lines := striter.OverLines(input)
 	edges := make(map[string]*set.Set[string])
-	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
+	for line := range strings.SplitSeq(input, "\n") {
 		from, to, ok := strings.Cut(line, "-")
 		if !ok {
 			return nil, fmt.Errorf("malformed line: %q", line)

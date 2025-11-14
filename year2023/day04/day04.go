@@ -6,8 +6,6 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
-
-	"go.saser.se/adventofgo/striter"
 )
 
 type uint128 struct {
@@ -67,11 +65,10 @@ func parseLine(line string) (scratchcard, error) {
 	if err != nil {
 		return scratchcard{}, fmt.Errorf("invalid line %q: parse ID from %q: %v", line, id, err)
 	}
-	parts := striter.OverSplit(rest, " ")
 	inWinning := true
 	s.winning = new(uint128)
 	s.card = new(uint128)
-	for part, ok := parts.Next(); ok; part, ok = parts.Next() {
+	for part := range strings.SplitSeq(rest, " ") {
 		if part == "" {
 			continue
 		}
@@ -94,8 +91,7 @@ func parseLine(line string) (scratchcard, error) {
 
 func Part1(input string) (string, error) {
 	sum := 0
-	lines := striter.OverLines(input)
-	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
+	for line := range strings.SplitSeq(input, "\n") {
 		card, err := parseLine(line)
 		if err != nil {
 			return "", fmt.Errorf("parse input: %v", err)
@@ -110,8 +106,7 @@ func Part1(input string) (string, error) {
 
 func Part2(input string) (string, error) {
 	cardCount := make(map[int]int) // card ID -> how many cards of it we have
-	lines := striter.OverLines(input)
-	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
+	for line := range strings.SplitSeq(input, "\n") {
 		card, err := parseLine(line)
 		if err != nil {
 			return "", fmt.Errorf("parse input: %v", err)

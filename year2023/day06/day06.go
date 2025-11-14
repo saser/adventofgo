@@ -5,8 +5,6 @@ import (
 	"math"
 	"strconv"
 	"strings"
-
-	"go.saser.se/adventofgo/striter"
 )
 
 type game struct {
@@ -16,8 +14,7 @@ type game struct {
 
 func parse(input string, joinNumbers bool) ([]game, error) {
 	var times, records []int
-	lines := striter.OverLines(input)
-	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
+	for line := range strings.SplitSeq(input, "\n") {
 		fields := strings.Fields(line)
 		var acc *[]int
 		if fields[0] == "Time:" {

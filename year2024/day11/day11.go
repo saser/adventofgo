@@ -3,8 +3,7 @@ package day11
 import (
 	"fmt"
 	"strconv"
-
-	"go.saser.se/adventofgo/striter"
+	"strings"
 )
 
 func digits(v uint64) uint64 {
@@ -53,8 +52,7 @@ func blink2(stones []uint64, blinks int) uint64 {
 
 func solve(input string, part int) (string, error) {
 	var stones []uint64
-	fields := striter.OverSplit(input, " ")
-	for field, ok := fields.Next(); ok; field, ok = fields.Next() {
+	for field := range strings.SplitSeq(input, " ") {
 		n, err := strconv.ParseUint(field, 10, 64)
 		if err != nil {
 			return "", err

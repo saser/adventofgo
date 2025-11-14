@@ -4,14 +4,11 @@ import (
 	"fmt"
 	"strings"
 	"unicode"
-
-	"go.saser.se/adventofgo/striter"
 )
 
 func Part1(input string) (string, error) {
 	sum := 0
-	lines := striter.OverLines(input)
-	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
+	for line := range strings.SplitSeq(input, "\n") {
 		first := line[strings.IndexFunc(line, unicode.IsDigit)]
 		last := line[strings.LastIndexFunc(line, unicode.IsDigit)]
 		sum += int(first-'0')*10 + int(last-'0')
@@ -36,8 +33,7 @@ var wordDigits = []string{
 
 func Part2(input string) (string, error) {
 	sum := 0
-	lines := striter.OverLines(input)
-	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
+	for line := range strings.SplitSeq(input, "\n") {
 		// To find the first digit we create longer and longer prefixes of the
 		// line, until we find a digit at the end of the prefix. That is
 		// guaranteed to be the first digit.

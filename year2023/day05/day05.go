@@ -3,13 +3,13 @@ package day05
 import (
 	"cmp"
 	"fmt"
+	"iter"
 	"math"
 	"slices"
 	"strconv"
 	"strings"
 
 	"go.saser.se/adventofgo/math/span"
-	"go.saser.se/adventofgo/striter"
 )
 
 type mapEntry struct {
@@ -39,8 +39,7 @@ type rangeMap struct {
 
 func parseRangeMap(s string) (*rangeMap, error) {
 	r := &rangeMap{}
-	lines := striter.OverLines(s)
-	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
+	for line := range strings.SplitSeq(s, "\n") {
 		e, err := parseMapEntry(line)
 		if err != nil {
 			return nil, fmt.Errorf("parse range map: %v", err)
@@ -120,18 +119,19 @@ func (a *almanac) MinLocation(s span.Span[uint]) uint {
 
 func parse(input string) (*almanac, error) {
 	a := &almanac{}
-	fragments := striter.OverSplit(input, "\n\n")
+	nextFragment, stop := iter.Pull(strings.SplitSeq(input, "\n\n"))
+	defer stop()
 
-	seedString, ok := fragments.Next()
+	seedString, ok := nextFragment()
 	if !ok {
 		return nil, fmt.Errorf("parse input: no seeds fragment")
 	}
 	const prefix = "seeds: "
-	if !strings.HasPrefix(seedString, prefix) {
+	seedString, ok = strings.CutPrefix(seedString, prefix)
+	if !ok {
 		return nil, fmt.Errorf("parse input: parse seeds from %q: missing prefix %q", seedString, prefix)
 	}
-	seeds := striter.OverSplit(strings.TrimPrefix(seedString, prefix), " ")
-	for seed, ok := seeds.Next(); ok; seed, ok = seeds.Next() {
+	for seed := range strings.SplitSeq(seedString, " ") {
 		i, err := strconv.Atoi(seed)
 		if err != nil {
 			return nil, fmt.Errorf("parse input: parse seeds from %q: parse %q: %v", seedString, seed, err)
@@ -149,7 +149,7 @@ func parse(input string) (*almanac, error) {
 		&a.HumidityToLocation,
 	}
 	mapIndex := 0
-	for fragment, ok := fragments.Next(); ok; fragment, ok = fragments.Next() {
+	for fragment, ok := nextFragment(); ok; fragment, ok = nextFragment() {
 		newline := strings.IndexRune(fragment, '\n')
 		if newline == -1 {
 			return nil, fmt.Errorf("parse input: parse fragment %q: first line not found", fragment)
