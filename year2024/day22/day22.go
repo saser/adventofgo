@@ -2,9 +2,38 @@ package day22
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 )
+
+// This was heavily inspired by
+// https://github.com/goggle/AdventOfCode2024.jl/blob/3d7f58e2ba7f108d4b8e0d8faf4debab08825579/src/day22.jl.
+
+// sequence is a type for the sequences of 4 price differences. Each element is
+// in the range [-9; +9], i.e. one of 19 values.
+type sequence [4]int8
+
+// Index returns an int that uniquely identifies this sequence and that can be
+// used as an index into a slice or similar.
+func (s *sequence) Index() int {
+	const (
+		pow0 = 1
+		pow1 = pow0 * 19
+		pow2 = pow1 * 19
+		pow3 = pow2 * 19
+	)
+	d0 := int(s[0] + 9)
+	d1 := int(s[1] + 9)
+	d2 := int(s[2] + 9)
+	d3 := int(s[3] + 9)
+	return d0*pow0 + d1*pow1 + d2*pow2 + d3*pow3
+}
+
+// Add adds the diff to the sequence as the latest price difference.
+func (s *sequence) Add(diff int8) {
+	s[0], s[1], s[2], s[3] = s[1], s[2], s[3], diff
+}
 
 // evolve returns the next number from n.
 func evolve(n uint64) uint64 {
@@ -24,11 +53,10 @@ func evolve(n uint64) uint64 {
 	//
 	// However, after implementing this function with both bit manipulation and
 	// regular math functions, there is no meaningful difference in runtime
-	// between the two approaches. (Maybe the compiler recognizes that the
-	// operations can be optimized into bit operations?) So I'm keeping the one
-	// with math operations because it maps more clearly to the problem
-	// description.
-
+	// between the two approaches. Comparing the generated amd64 assembly they
+	// are actually identical and are implemented with bit shifts and bitwise
+	// AND operators. So the compiler has recognized that these operations can
+	// be implemented with bit fiddling -- good job compiler!
 	n = (n ^ (n * 64)) % 16777216
 	n = (n ^ (n / 32)) % 16777216
 	n = (n ^ (n * 2048)) % 16777216
@@ -50,94 +78,43 @@ func Part1(input string) (string, error) {
 	return fmt.Sprint(sum), nil
 }
 
-// signature returns the signature produced by the given sequence of five
-// numbers.
-func signature(n0, n1, n2, n3, n4 uint64) uint32 {
-	d0 := uint8(n0 % 10)
-	d1 := uint8(n1 % 10)
-	d2 := uint8(n2 % 10)
-	d3 := uint8(n3 % 10)
-	d4 := uint8(n4 % 10)
-	return 0 |
-		uint32(d1-d0)<<24 |
-		uint32(d2-d1)<<16 |
-		uint32(d3-d2)<<8 |
-		uint32(d4-d3)
-}
-
-// nextSignature takes an existing signature, the last number included in that
-// signature, and the new number, and returns the new signature incorporating
-// the new number.
-func nextSignature(sig uint32, n3, n4 uint64) uint32 {
-	d3 := uint8(n3 % 10)
-	d4 := uint8(n4 % 10)
-	return sig<<8 | uint32(d4-d3)
-}
-
 func Part2(input string) (string, error) {
-	// The price changes range from -18 to +18, so they all fit in a signed
-	// 8-bit integer each (1 bit for sign + 6 bits for magnitude < 8 bits). This
-	// means that a sequence of four changes can be represented by a 32-bit
-	// integer, where the most significant 8 bits hold the "oldest" change.
-	// Let's call that 32-bit integer the "signature" of the four changes. The
-	// `wonByBuyer` slice holds a map for each buyer, where the map key is the
-	// change signature, and the value is the amount of bananas won by selling
-	// the first time a change with that signature is seen.
-	//
-	// Using the example in the problem description:
-	//
-	// The signature for `-1,-1,0,2` is:
-	// -1 => 11111111
-	// -1 => 11111111
-	//  0 => 00000000 (0 for positive, 000 for 0 in binary)
-	//  2 => 00000010 (0 for negative, 010 for 2 in binary)
-	//  => 11111111 11111111 00000000 00000010
-	//  => 11111111111111110000000000000010
-	//  => 4294901762 when interpreted as uint32.
-	//
-	// The first time the sequence is seen, the amount of bananas won is 6. So
-	// if the first buyer starts with 123, then wonByBuyer[0][4294901762] = 6.
-	//
-	// The overall idea is to gradually build up the full profit of each
-	// signature, by adding to the entries in this map every time a signature is
-	// seen. When all buyers have been processed, we can go over this map and
-	// pick out the biggest profit.
-	//
-	// The reason for collecting all the lines first, rather than iterating over
-	// them one by one, is that we can then preallocate all the required memory
-	// for the `profits` map. Benchmarking shows that this uses more memory but
-	// also runs about 2x as fast, which seems like a good tradeoff.
-	lines := strings.Split(strings.TrimSpace(input), "\n")
-	profits := make(map[uint32]uint64, len(lines)*2000)
-	for _, line := range lines {
-		n0, err := strconv.ParseUint(line, 10, 64)
+	// There are k = 19^4 = 130321 different
+	// possible sequences.
+	const k = 19 * 19 * 19 * 19
+
+	// Profits maps from a sequence's index to the total amount of profits
+	// given by that sequence, across all buyers.
+	var profits [k]int
+
+	// Seen tracks which sequences have been seen for a given buyer. It's
+	// cleared out between buyers, to save memory.
+	var seen [k]bool
+
+	// For each buyer, generate all its 2000 sequences and record the
+	// profits.
+	for line := range strings.SplitSeq(strings.TrimSpace(input), "\n") {
+		secret, err := strconv.ParseUint(line, 10, 64)
 		if err != nil {
 			return "", err
 		}
-		// We need to keep track of which signatures we've seen, so that we only
-		// record the profit the first time a signature is seen.
-		seen := make(map[uint32]struct{}, 2000)
-		// Get the first 5 numbers so we can build up the first signature.
-		n1 := evolve(n0)
-		n2 := evolve(n1)
-		n3 := evolve(n2)
-		n4 := evolve(n3)
-		sig := signature(n0, n1, n2, n3, n4)
-		profits[sig] += n4 % 10
-		seen[sig] = struct{}{}
-		// Then go through the remaining numbers and find all the signatures.
-		for range 2000 - 4 {
-			n3, n4 = n4, evolve(n4)
-			sig = nextSignature(sig, n3, n4)
-			if _, ok := seen[sig]; !ok {
-				seen[sig] = struct{}{}
-				profits[sig] += n4 % 10
+		price := int8(secret % 10)
+		seq := new(sequence)
+		for i := range 2000 {
+			secret = evolve(secret)
+			nextPrice := int8(secret % 10)
+			seq.Add(nextPrice - price)
+			price = nextPrice
+
+			if i >= 3 { // i.e. we have seen at least 4 price changes (i = 0, 1, 2, 3, ...)
+				idx := seq.Index()
+				if !seen[idx] {
+					seen[idx] = true
+					profits[idx] += int(price)
+				}
 			}
 		}
+		seen = [k]bool{}
 	}
-	var best uint64 = 0
-	for _, profit := range profits {
-		best = max(best, profit)
-	}
-	return fmt.Sprint(best), nil
+	return fmt.Sprint(slices.Max(profits[:])), nil
 }
