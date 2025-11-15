@@ -3,11 +3,10 @@ package day07
 import (
 	"cmp"
 	"fmt"
+	"maps"
 	"slices"
 	"strconv"
 	"strings"
-
-	"golang.org/x/exp/maps"
 )
 
 type card int
@@ -142,7 +141,7 @@ func handSignature(h hand, withJokers bool) signature {
 	//
 	// This idea is not mine; it was taken from another AoC solution:
 	// https://github.com/ViddeM/advent-of-code-2023/blob/4c536cdd0c46f480f5dd3e829d2014f3fcccf451/day07/src/solution.rs#L41-L61
-	max := slices.Max(maps.Values(freq)) + jokerCount
+	max := slices.Max(slices.Collect(maps.Values(freq))) + jokerCount
 	labels := len(freq)
 	switch {
 	case max == 5:

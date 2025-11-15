@@ -12,9 +12,8 @@ package day09
 
 import (
 	"fmt"
+	"maps"
 	"strings"
-
-	"golang.org/x/exp/maps"
 )
 
 type edge struct {
