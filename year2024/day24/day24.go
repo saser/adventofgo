@@ -145,10 +145,6 @@ func (s *system) reset(x, y uint64) {
 		w.Value = nil
 	}
 	for i, v := range bitsOf(x) {
-		// My puzzle input has x00 through x44
-		if i > 44 {
-			break
-		}
 		name := fmt.Sprintf("x%02d", i)
 		w, ok := s.wires[name]
 		if !ok {
@@ -157,10 +153,6 @@ func (s *system) reset(x, y uint64) {
 		w.Value = ptr(v)
 	}
 	for i, v := range bitsOf(y) {
-		// My puzzle input has y00 through y44
-		if i > 44 {
-			break
-		}
 		name := fmt.Sprintf("y%02d", i)
 		w, ok := s.wires[name]
 		if !ok {
