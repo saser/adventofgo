@@ -13,11 +13,11 @@ var (
 	gateRE    = regexp.MustCompile(`^(\w{3}) (AND|OR|XOR) (\w{3}) -> (\w{3})$`)
 )
 
-func ptr(v int64) *int64 { return &v }
+func ptr(v uint64) *uint64 { return &v }
 
 type wire struct {
-	Name  string // e.g. "x00" or "pqr"
-	Value *int64 // 0 or 1
+	Name  string  // e.g. "x00" or "pqr"
+	Value *uint64 // 0 or 1
 }
 
 func parseWire(line string) (*wire, error) {
@@ -111,7 +111,7 @@ func parseSystem(input string) (*system, error) {
 	}, nil
 }
 
-func (s *system) evaluate(w *wire) int64 {
+func (s *system) evaluate(w *wire) uint64 {
 	if w.Value != nil {
 		return *w.Value
 	}
@@ -121,7 +121,7 @@ func (s *system) evaluate(w *wire) int64 {
 	}
 	v1 := s.evaluate(g.W1)
 	v2 := s.evaluate(g.W2)
-	var out int64
+	var out uint64
 	switch g.Op {
 	case "AND":
 		out = v1 & v2
@@ -140,11 +140,15 @@ func (s *system) evaluateAll() {
 	}
 }
 
-func (s *system) reset(x, y int64) {
+func (s *system) reset(x, y uint64) {
 	for _, w := range s.wires {
 		w.Value = nil
 	}
 	for i, v := range bitsOf(x) {
+		// My puzzle input has x00 through x44
+		if i > 44 {
+			break
+		}
 		name := fmt.Sprintf("x%02d", i)
 		w, ok := s.wires[name]
 		if !ok {
@@ -153,6 +157,10 @@ func (s *system) reset(x, y int64) {
 		w.Value = ptr(v)
 	}
 	for i, v := range bitsOf(y) {
+		// My puzzle input has y00 through y44
+		if i > 44 {
+			break
+		}
 		name := fmt.Sprintf("y%02d", i)
 		w, ok := s.wires[name]
 		if !ok {
@@ -162,8 +170,8 @@ func (s *system) reset(x, y int64) {
 	}
 }
 
-func (s *system) z() int64 {
-	var z int64
+func (s *system) z() uint64 {
+	var z uint64
 	for i := range 64 {
 		name := fmt.Sprintf("z%02d", i)
 		w, ok := s.wires[name]
@@ -175,14 +183,14 @@ func (s *system) z() int64 {
 	return z
 }
 
-func (s *system) run(x, y int64) int64 {
+func (s *system) run(x, y uint64) uint64 {
 	s.reset(x, y)
 	s.evaluateAll()
 	return s.z()
 }
 
-func bitsOf(v int64) iter.Seq2[int, int64] {
-	return func(yield func(int, int64) bool) {
+func bitsOf(v uint64) iter.Seq2[int, uint64] {
+	return func(yield func(int, uint64) bool) {
 		for i := range 64 {
 			if !yield(i, v&1) {
 				return
