@@ -12,8 +12,8 @@ package day09
 
 import (
 	"fmt"
+	"strings"
 
-	"go.saser.se/adventofgo/striter"
 	"golang.org/x/exp/maps"
 )
 
@@ -22,9 +22,8 @@ type edge struct {
 }
 
 func parse(input string) (map[edge]int, error) {
-	lines := striter.OverLines(input)
 	distances := make(map[edge]int)
-	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
+	for line := range strings.SplitSeq(input, "\n") {
 		var cityA, cityB string
 		var d int
 		if _, err := fmt.Sscanf(line, "%s to %s = %d", &cityA, &cityB, &d); err != nil {

@@ -2,18 +2,17 @@ package day05
 
 import (
 	"fmt"
+	"iter"
 	"slices"
 	"strconv"
 	"strings"
-
-	"go.saser.se/adventofgo/striter"
 )
 
-func parsePageOrderings(iter striter.Iter) (map[int][]int, error) {
+func parsePageOrderings(lines iter.Seq[string]) (map[int][]int, error) {
 	m := make(map[int][]int)
-	for line, ok := iter.Next(); ok; line, ok = iter.Next() {
+	for line := range lines {
 		if line == "" {
-			return m, nil
+			break
 		}
 		beforeStr, afterStr, ok := strings.Cut(line, "|")
 		if !ok {
@@ -29,12 +28,12 @@ func parsePageOrderings(iter striter.Iter) (map[int][]int, error) {
 		}
 		m[before] = append(m[before], after)
 	}
-	return nil, fmt.Errorf("unreachable")
+	return m, nil
 }
 
-func parseUpdates(iter striter.Iter) ([][]int, error) {
+func parseUpdates(lines iter.Seq[string]) ([][]int, error) {
 	var updates [][]int
-	for line, ok := iter.Next(); ok; line, ok = iter.Next() {
+	for line := range lines {
 		raw := strings.Split(line, ",")
 		u := make([]int, len(raw))
 		for i, s := range strings.Split(line, ",") {
@@ -50,12 +49,12 @@ func parseUpdates(iter striter.Iter) ([][]int, error) {
 }
 
 func solve(input string, part int) (string, error) {
-	lines := striter.OverLines(input)
-	orderings, err := parsePageOrderings(lines)
+	fragments := strings.Split(input, "\n\n")
+	orderings, err := parsePageOrderings(strings.SplitSeq(fragments[0], "\n"))
 	if err != nil {
 		return "", fmt.Errorf("parse page orderings: %v", err)
 	}
-	updates, err := parseUpdates(lines)
+	updates, err := parseUpdates(strings.SplitSeq(fragments[1], "\n"))
 	if err != nil {
 		return "", fmt.Errorf("parse updates: %v", err)
 	}

@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	"go.saser.se/adventofgo/striter"
 	"golang.org/x/exp/maps"
 )
 
@@ -194,8 +193,7 @@ func (b bid) String() string {
 
 func parse(input string, withJokers bool) ([]bid, error) {
 	var bids []bid
-	lines := striter.OverLines(input)
-	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
+	for line := range strings.SplitSeq(input, "\n") {
 		b, err := parseBid(line, withJokers)
 		if err != nil {
 			return nil, fmt.Errorf("parse input: parse line %q: %v", line, err)

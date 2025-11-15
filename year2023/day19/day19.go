@@ -2,11 +2,11 @@ package day19
 
 import (
 	"fmt"
+	"iter"
 	"strconv"
 	"strings"
 
 	"go.saser.se/adventofgo/math/span"
-	"go.saser.se/adventofgo/striter"
 )
 
 const (
@@ -87,8 +87,7 @@ func parseWorkflow(s string) (workflow, error) {
 	var w workflow
 	openBrace := strings.IndexByte(s, '{')
 	w.Name = s[:openBrace]
-	parts := striter.OverSplit(s[openBrace+1:len(s)-1], ",")
-	for part, ok := parts.Next(); ok; part, ok = parts.Next() {
+	for part := range strings.SplitSeq(s[openBrace+1:len(s)-1], ",") {
 		if len(part) >= 2 && (part[1] == '<' || part[1] == '>') {
 			r, err := parseCmpRule(part)
 			if err != nil {
@@ -173,8 +172,7 @@ func parsePart(s string) (part, error) {
 		's': &p.S,
 	}
 	s = s[1 : len(s)-1] // Strip braces.
-	splits := striter.OverSplit(s, ",")
-	for split, ok := splits.Next(); ok; split, ok = splits.Next() {
+	for split := range strings.SplitSeq(s, ",") {
 		v, err := strconv.Atoi(split[2:])
 		if err != nil {
 			return part{}, fmt.Errorf("parse part: %v", err)
@@ -193,12 +191,12 @@ func parse(input string, parseParts bool) (system, error) {
 	s := system{
 		Workflows: make(map[string]workflow),
 	}
-	fragments := striter.OverSplit(input, "\n\n")
+	nextFragment, stop := iter.Pull(strings.SplitSeq(input, "\n\n"))
+	defer stop()
 
 	// Parse workflows.
-	fragment, _ := fragments.Next()
-	lines := striter.OverLines(fragment)
-	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
+	fragment, _ := nextFragment()
+	for line := range strings.SplitSeq(fragment, "\n") {
 		w, err := parseWorkflow(line)
 		if err != nil {
 			return system{}, fmt.Errorf("parse: %v", err)
@@ -210,9 +208,8 @@ func parse(input string, parseParts bool) (system, error) {
 		return s, nil
 	}
 	// Parse parts.
-	fragment, _ = fragments.Next()
-	lines = striter.OverLines(fragment)
-	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
+	fragment, _ = nextFragment()
+	for line := range strings.SplitSeq(fragment, "\n") {
 		p, err := parsePart(line)
 		if err != nil {
 			return system{}, fmt.Errorf("parse: %v", err)

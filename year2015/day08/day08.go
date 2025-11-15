@@ -3,14 +3,12 @@ package day08
 import (
 	"fmt"
 	"strconv"
-
-	"go.saser.se/adventofgo/striter"
+	"strings"
 )
 
 func solve(input string, part int) (string, error) {
-	lines := striter.OverLines(input)
 	sum := 0
-	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
+	for line := range strings.SplitSeq(input, "\n") {
 		line := line
 		switch part {
 		case 1:

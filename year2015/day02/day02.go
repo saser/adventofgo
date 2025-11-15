@@ -2,8 +2,7 @@ package day02
 
 import (
 	"fmt"
-
-	"go.saser.se/adventofgo/striter"
+	"strings"
 )
 
 func min(i int, is ...int) int {
@@ -26,8 +25,7 @@ func ribbon(l, w, h int) int {
 
 func solve(input string, part int) (string, error) {
 	sum := 0
-	lines := striter.OverLines(input)
-	for line, ok := lines.Next(); ok; line, ok = lines.Next() {
+	for line := range strings.SplitSeq(input, "\n") {
 		var l, w, h int
 		if _, err := fmt.Sscanf(line, "%dx%dx%d", &l, &w, &h); err != nil {
 			return "", fmt.Errorf("parse line %q: %v", line, err)
