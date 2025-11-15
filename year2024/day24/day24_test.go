@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/hexops/autogold/v2"
+	"go.saser.se/adventofgo/aocdata"
 	"go.saser.se/adventofgo/aoctest"
 )
 
@@ -109,8 +110,8 @@ x02 OR y02 -> z02
 }
 
 func TestBitsOf(t *testing.T) {
-	test := func(v int64) string {
-		var bits []int64
+	test := func(v uint64) string {
+		var bits []uint64
 		for _, b := range bitsOf(v) {
 			bits = append(bits, b)
 		}
@@ -120,7 +121,7 @@ func TestBitsOf(t *testing.T) {
 
 	got = test(0)
 	autogold.Expect("0 (MSB first) -> [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0] (LSB first)").Equal(t, got)
-	got = test(^0)
+	got = test(^uint64(0))
 	autogold.Expect("-1 (MSB first) -> [1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1] (LSB first)").Equal(t, got)
 	got = test(123456)
 	autogold.Expect("11110001001000000 (MSB first) -> [0 0 0 0 0 0 1 0 0 1 0 0 0 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0] (LSB first)").Equal(t, got)
@@ -143,7 +144,7 @@ x02 OR y02 -> z02
 		t.Fatal(err)
 	}
 	s.evaluateAll()
-	if got, want := s.z(), int64(0b100); got != want {
+	if got, want := s.z(), uint64(0b100); got != want {
 		t.Errorf("s.z() = %b; want %b", got, want)
 	}
 
@@ -200,8 +201,41 @@ tnw OR pbm -> gnj
 		t.Fatal(err)
 	}
 	s.evaluateAll()
-	if got, want := s.z(), int64(0b0011111101000); got != want {
+	if got, want := s.z(), uint64(0b0011111101000); got != want {
 		t.Errorf("s.z() = %b; want %b", got, want)
+	}
+}
+
+func allSet(upTo int) uint64 {
+	return ^uint64(0) >> (64 - (upTo + 1))
+}
+
+func TestAllSet(t *testing.T) {
+	got := func(upTo int) string { return fmt.Sprintf("%b", allSet(upTo)) }
+	autogold.Expect("1").Equal(t, got(0))
+	autogold.Expect("11").Equal(t, got(1))
+	autogold.Expect("111").Equal(t, got(2))
+	autogold.Expect("1111").Equal(t, got(3))
+	autogold.Expect("11111111111").Equal(t, got(10))
+}
+
+func TestSweep(t *testing.T) {
+	s, err := parseSystem(strings.TrimSpace(aocdata.InputT(t, 2024, 24)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := range 45 {
+		var x, y uint64 = 1 << i, 0
+		var want uint64 = x + y
+		if got := s.run(y, x); got != want {
+			t.Errorf("     44444333333333322222222221111111111          ")
+			t.Errorf("     432109876543210987654321098765432109876543210")
+			t.Errorf("     %045b", x)
+			t.Errorf("   + %045b", y)
+			t.Errorf("   = %045b;", got)
+			t.Errorf("want %045b", want)
+			t.Error()
+		}
 	}
 }
 
