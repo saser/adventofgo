@@ -10,6 +10,15 @@ import (
 	"go.saser.se/adventofgo/aoctest"
 )
 
+func parseSystemT(t *testing.T, input string) *system {
+	t.Helper()
+	s, err := parseSystem(strings.TrimSpace(input))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return s
+}
+
 func TestParseWires(t *testing.T) {
 	test := func(line string) string {
 		w, err := parseWire(line)
@@ -224,11 +233,13 @@ func TestSweep(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	t.Log("before swapping:")
 	for i := range 45 {
 		var x, y uint64 = 1 << i, 0
 		var want uint64 = x + y
-		if got := s.run(y, x); got != want {
-			t.Errorf("     44444333333333322222222221111111111          ")
+		if got := s.run(x, y); got != want {
+			t.Errorf("     444443333333333222222222211111111110000000000")
 			t.Errorf("     432109876543210987654321098765432109876543210")
 			t.Errorf("     %045b", x)
 			t.Errorf("   + %045b", y)
@@ -237,6 +248,75 @@ func TestSweep(t *testing.T) {
 			t.Error()
 		}
 	}
+
+	s.swap("z09", "z10")
+	s.swap("z20", "z21")
+	s.swap("z30", "z31")
+	s.swap("z34", "z35")
+
+	t.Log("after swapping:")
+	for i := range 45 {
+		var x, y uint64 = 1 << i, 0
+		var want uint64 = x + y
+		if got := s.run(x, y); got != want {
+			t.Errorf("     444443333333333222222222211111111110000000000")
+			t.Errorf("     432109876543210987654321098765432109876543210")
+			t.Errorf("     %045b", x)
+			t.Errorf("   + %045b", y)
+			t.Errorf("   = %045b;", got)
+			t.Errorf("want %045b", want)
+			t.Error()
+		}
+	}
+}
+
+func TestSwap(t *testing.T) {
+	s := parseSystemT(t, `
+x00: 0
+x01: 1
+x02: 0
+x03: 1
+x04: 0
+x05: 1
+y00: 0
+y01: 0
+y02: 1
+y03: 1
+y04: 0
+y05: 1
+
+x00 AND y00 -> z05
+x01 AND y01 -> z02
+x02 AND y02 -> z01
+x03 AND y03 -> z03
+x04 AND y04 -> z04
+x05 AND y05 -> z00
+	`)
+
+	var x, y uint64 = 0b101010, 0b101100
+	var want uint64 = x & y
+	t.Errorf("before swapping:")
+	got := s.run(x, y)
+	t.Errorf("     0000000000")
+	t.Errorf("     9876543210")
+	t.Errorf("     %010b", x)
+	t.Errorf("   & %010b", y)
+	t.Errorf("   = %010b;", got)
+	t.Errorf("want %010b", want)
+	t.Error()
+
+	s.swap("z00", "z05")
+	s.swap("z01", "z02")
+
+	t.Errorf("after swapping:")
+	got = s.run(x, y)
+	t.Errorf("     0000000000")
+	t.Errorf("     9876543210")
+	t.Errorf("     %010b", x)
+	t.Errorf("   & %010b", y)
+	t.Errorf("   = %010b;", got)
+	t.Errorf("want %010b", want)
+	t.Error()
 }
 
 func TestPart1(t *testing.T) {

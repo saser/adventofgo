@@ -189,6 +189,20 @@ func (s *system) run(x, y uint64) uint64 {
 	return s.z()
 }
 
+func (s *system) swap(a, b string) {
+	ga, ok := s.gates[a]
+	if !ok {
+		panic(fmt.Errorf("gate with output %q doesn't exist", a))
+	}
+	gb, ok := s.gates[b]
+	if !ok {
+		panic(fmt.Errorf("gate with output %q doesn't exist", b))
+	}
+	ga.Out, gb.Out = gb.Out, ga.Out
+	s.gates[ga.Out.Name] = ga
+	s.gates[gb.Out.Name] = gb
+}
+
 func bitsOf(v uint64) iter.Seq2[int, uint64] {
 	return func(yield func(int, uint64) bool) {
 		for i := range 64 {
