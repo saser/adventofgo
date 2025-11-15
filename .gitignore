@@ -1,0 +1,5 @@
+# We don't want to commit profiles since they're ephemeral by nature.
+*.pprof
+# The `go` command builds the test binaries when you run profiling tools, and
+# we don't want to commit them.
+*.test
