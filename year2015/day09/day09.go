@@ -13,6 +13,7 @@ package day09
 import (
 	"fmt"
 	"maps"
+	"slices"
 	"strings"
 )
 
@@ -70,7 +71,7 @@ func optimalTrip(distances map[edge]int, cmp cmpFunc) int {
 	for e := range distances {
 		citySet[e.From] = struct{}{}
 	}
-	cities := maps.Keys(citySet)
+	cities := slices.Collect(maps.Keys(citySet))
 	var best *int
 	for _, itinerary := range permutations(cities) {
 		trip := 0
