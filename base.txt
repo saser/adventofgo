@@ -1,0 +1,40 @@
+goos: linux
+goarch: amd64
+pkg: go.saser.se/adventofgo/year2024/day22
+cpu: AMD Ryzen 9 5900HX with Radeon Graphics        
+BenchmarkPart1-16    	     120	   9875146 ns/op	      24 B/op	       2 allocs/op
+BenchmarkPart1-16    	     121	   9880284 ns/op	      24 B/op	       2 allocs/op
+BenchmarkPart1-16    	     121	   9883440 ns/op	      24 B/op	       2 allocs/op
+BenchmarkPart1-16    	     121	   9859090 ns/op	      24 B/op	       2 allocs/op
+BenchmarkPart1-16    	     121	   9866723 ns/op	      24 B/op	       2 allocs/op
+BenchmarkPart1-16    	     121	   9862150 ns/op	      24 B/op	       2 allocs/op
+BenchmarkPart1-16    	     121	   9869092 ns/op	      24 B/op	       2 allocs/op
+BenchmarkPart1-16    	     121	   9860329 ns/op	      24 B/op	       2 allocs/op
+BenchmarkPart1-16    	     121	   9869852 ns/op	      24 B/op	       2 allocs/op
+BenchmarkPart1-16    	     121	   9869107 ns/op	      24 B/op	       2 allocs/op
+BenchmarkPart1-16    	     121	   9857985 ns/op	      24 B/op	       2 allocs/op
+BenchmarkPart1-16    	     121	   9853009 ns/op	      24 B/op	       2 allocs/op
+BenchmarkPart1-16    	     121	   9865106 ns/op	      24 B/op	       2 allocs/op
+BenchmarkPart1-16    	     121	   9863246 ns/op	      24 B/op	       2 allocs/op
+BenchmarkPart2-16    	      51	  23385754 ns/op	 1049389 B/op	       3 allocs/op
+BenchmarkPart2-16    	      49	  23604891 ns/op	 1049369 B/op	       3 allocs/op
+BenchmarkPart2-16    	      49	  23692849 ns/op	 1049369 B/op	       3 allocs/op
+BenchmarkPart2-16    	      51	  23677166 ns/op	 1049397 B/op	       3 allocs/op
+BenchmarkPart2-16    	      46	  23731537 ns/op	 1049367 B/op	       3 allocs/op
+BenchmarkPart2-16    	      49	  23833389 ns/op	 1049378 B/op	       3 allocs/op
+BenchmarkPart2-16    	      50	  23651185 ns/op	 1049372 B/op	       4 allocs/op
+BenchmarkPart2-16    	      49	  23694774 ns/op	 1049356 B/op	       3 allocs/op
+BenchmarkPart2-16    	      49	  23573896 ns/op	 1049379 B/op	       3 allocs/op
+BenchmarkPart2-16    	      49	  23282339 ns/op	 1049374 B/op	       3 allocs/op
+BenchmarkPart2-16    	      51	  23456409 ns/op	 1049393 B/op	       3 allocs/op
+BenchmarkPart2-16    	      48	  23389340 ns/op	 1049388 B/op	       3 allocs/op
+BenchmarkPart2-16    	      49	  23834252 ns/op	 1049376 B/op	       3 allocs/op
+BenchmarkPart2-16    	      50	  23760477 ns/op	 1049358 B/op	       3 allocs/op
+BenchmarkPart2-16    	      49	  23451690 ns/op	 1049360 B/op	       3 allocs/op
+BenchmarkPart2-16    	      52	  23366899 ns/op	 1049373 B/op	       3 allocs/op
+BenchmarkPart2-16    	      51	  23382737 ns/op	 1049380 B/op	       3 allocs/op
+BenchmarkPart2-16    	      48	  23494879 ns/op	 1049390 B/op	       3 allocs/op
+BenchmarkPart2-16    	      49	  23744704 ns/op	 1049383 B/op	       3 allocs/op
+BenchmarkPart2-16    	      50	  23612210 ns/op	 1049358 B/op	       3 allocs/op
+PASS
+ok  	go.saser.se/adventofgo/year2024/day22	64.163s
