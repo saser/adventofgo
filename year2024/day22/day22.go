@@ -85,7 +85,7 @@ func Part2(input string) (string, error) {
 
 	// Profits maps from a sequence's index to the total amount of profits
 	// given by that sequence, across all buyers.
-	var profits [k]int
+	var profits [k]uint16
 
 	// Seen tracks which sequences have been seen for a given buyer. It's
 	// cleared out between buyers, to save memory.
@@ -110,7 +110,7 @@ func Part2(input string) (string, error) {
 				idx := seq.Index()
 				if !seen[idx] {
 					seen[idx] = true
-					profits[idx] += int(price)
+					profits[idx] += uint16(price)
 				}
 			}
 		}
