@@ -3,12 +3,26 @@ package day22
 import (
 	"fmt"
 	"slices"
-	"strconv"
 	"strings"
+	"sync"
+	"sync/atomic"
 )
 
 // This was heavily inspired by
 // https://github.com/goggle/AdventOfCode2024.jl/blob/3d7f58e2ba7f108d4b8e0d8faf4debab08825579/src/day22.jl.
+
+func parse(input string) []uint64 {
+	lines := strings.Split(strings.TrimSpace(input), "\n")
+	secrets := make([]uint64, len(lines))
+	for i, line := range lines {
+		var n uint64 = 0
+		for _, r := range line {
+			n = n*10 + uint64(r-'0')
+		}
+		secrets[i] = n
+	}
+	return secrets
+}
 
 // sequence is a type for the sequences of 4 price differences. Each element is
 // in the range [-9; +9], i.e. one of 19 values.
@@ -64,18 +78,33 @@ func evolve(n uint64) uint64 {
 }
 
 func Part1(input string) (string, error) {
-	var sum uint64 = 0
-	for line := range strings.SplitSeq(input, "\n") {
-		n, err := strconv.ParseUint(line, 10, 64)
-		if err != nil {
-			return "", err
-		}
-		for range 2000 {
-			n = evolve(n)
-		}
-		sum += n
+	var sum atomic.Uint64
+	secrets := parse(input)
+	const workers = 16
+	var wg sync.WaitGroup
+	for chunk := range slices.Chunk(secrets, len(secrets)/workers) {
+		wg.Go(func() {
+			for _, n := range chunk {
+				for range 2000 {
+					n = evolve(n)
+				}
+				sum.Add(n)
+			}
+		})
 	}
-	return fmt.Sprint(sum), nil
+	wg.Wait()
+	return fmt.Sprint(sum.Load()), nil
+	// for line := range strings.SplitSeq(input, "\n") {
+	// 	n, err := strconv.ParseUint(line, 10, 64)
+	// 	if err != nil {
+	// 		return "", err
+	// 	}
+	// 	for range 2000 {
+	// 		n = evolve(n)
+	// 	}
+	// 	sum.Add(n)
+	// }
+	// return fmt.Sprint(sum), nil
 }
 
 func Part2(input string) (string, error) {
@@ -85,36 +114,72 @@ func Part2(input string) (string, error) {
 
 	// Profits maps from a sequence's index to the total amount of profits
 	// given by that sequence, across all buyers.
-	var profits [k]uint16
+	var profits [k]*atomic.Uint32
+	for i := range profits {
+		profits[i] = new(atomic.Uint32)
+	}
+
+	secrets := parse(input)
+	const workers = 16
+	var wg sync.WaitGroup
+	for chunk := range slices.Chunk(secrets, len(secrets)/workers) {
+		wg.Go(func() {
+			var seen [k]bool
+			for _, secret := range chunk {
+				clear(seen[:])
+				price := int8(secret % 10)
+				seq := new(sequence)
+				for i := range 2000 {
+					secret = evolve(secret)
+					nextPrice := int8(secret % 10)
+					seq.Add(nextPrice - price)
+					price = nextPrice
+
+					if i >= 3 { // i.e. we have seen at least 4 price changes (i = 0, 1, 2, 3, ...)
+						idx := seq.Index()
+						if !seen[idx] {
+							seen[idx] = true
+							profits[idx].Add(uint32(price))
+						}
+					}
+				}
+			}
+		})
+	}
+	wg.Wait()
 
 	// Seen tracks which sequences have been seen for a given buyer. It's
 	// cleared out between buyers, to save memory.
-	var seen [k]bool
+	// var seen [k]bool
 
 	// For each buyer, generate all its 2000 sequences and record the
 	// profits.
-	for line := range strings.SplitSeq(strings.TrimSpace(input), "\n") {
-		secret, err := strconv.ParseUint(line, 10, 64)
-		if err != nil {
-			return "", err
-		}
-		price := int8(secret % 10)
-		seq := new(sequence)
-		for i := range 2000 {
-			secret = evolve(secret)
-			nextPrice := int8(secret % 10)
-			seq.Add(nextPrice - price)
-			price = nextPrice
+	// for line := range strings.SplitSeq(strings.TrimSpace(input), "\n") {
+	// 	secret, err := strconv.ParseUint(line, 10, 64)
+	// 	if err != nil {
+	// 		return "", err
+	// 	}
+	// 	price := int8(secret % 10)
+	// 	seq := new(sequence)
+	// 	for i := range 2000 {
+	// 		secret = evolve(secret)
+	// 		nextPrice := int8(secret % 10)
+	// 		seq.Add(nextPrice - price)
+	// 		price = nextPrice
 
-			if i >= 3 { // i.e. we have seen at least 4 price changes (i = 0, 1, 2, 3, ...)
-				idx := seq.Index()
-				if !seen[idx] {
-					seen[idx] = true
-					profits[idx] += uint16(price)
-				}
-			}
-		}
-		seen = [k]bool{}
+	// 		if i >= 3 { // i.e. we have seen at least 4 price changes (i = 0, 1, 2, 3, ...)
+	// 			idx := seq.Index()
+	// 			if !seen[idx] {
+	// 				seen[idx] = true
+	// 				profits[idx].Add(uint32(price))
+	// 			}
+	// 		}
+	// 	}
+	// 	seen = [k]bool{}
+	// }
+	var answer uint32 = 0
+	for _, p := range profits {
+		answer = max(answer, p.Load())
 	}
-	return fmt.Sprint(slices.Max(profits[:])), nil
+	return fmt.Sprint(answer), nil
 }
