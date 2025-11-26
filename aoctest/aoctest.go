@@ -43,20 +43,13 @@ func Test(t *testing.T, year int, day int, part int, fn SolveFunc) {
 	}
 }
 
-// These variables are to hopefully prevent the compiler from optimizing the
-// solution away.
-var (
-	bAnswer string
-	bErr    error
-)
-
 // Benchmark benchmarks the given solver function against the real input for the
 // specified puzzle.
-func Benchmark(b *testing.B, year int, day int, part int, fn SolveFunc) {
+func Benchmark(b *testing.B, year int, day int, part int, solve SolveFunc) {
 	b.Helper()
 	input := aocdata.InputT(b, year, day)
 	want := aocdata.AnswerT(b, year, day, part)
-	got, err := fn(input)
+	got, err := solve(input)
 	if err != nil {
 		b.Fatalf("Part%d(<real input>) err = %v", part, err)
 	}
@@ -64,7 +57,7 @@ func Benchmark(b *testing.B, year int, day int, part int, fn SolveFunc) {
 		b.Fatalf("Part%d(<real input>) = %q; want %q", part, got, want)
 	}
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		bAnswer, bErr = fn(input)
+	for b.Loop() {
+		solve(input)
 	}
 }
